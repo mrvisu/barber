@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tito Barber Shop</title>
   <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💈</text></svg>">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -187,6 +187,9 @@
     ];
 
     // --- App State ---
+    const _today = new Date().toISOString().split('T')[0];
+    const _currentMonth = _today.slice(0, 7);
+
     let state = {
       user: null,
       role: null,
@@ -215,6 +218,8 @@
       tempBookingDate: '', 
       tempBookingTime: '',
       showServicesManagement: false,
+      adminSelectedDate: _today,
+      adminSelectedMonth: _currentMonth,
       
       // Admin Direct Add State
       adminAdd: {
@@ -498,6 +503,17 @@
          if (e.target.id === 'admin-add-time') {
              state.adminAdd.time = e.target.value;
          }
+         if (e.target.id === 'admin-month-filter') {
+             state.adminSelectedMonth = e.target.value;
+             const today = new Date().toISOString().split('T')[0];
+             if(today.startsWith(state.adminSelectedMonth)) {
+                 state.adminSelectedDate = today;
+             } else {
+                 const firstDay = state.queue.filter(q => q.bookingDate?.startsWith(state.adminSelectedMonth)).map(q=>q.bookingDate).sort()[0];
+                 state.adminSelectedDate = firstDay || `${state.adminSelectedMonth}-01`;
+             }
+             renderAdminPanel();
+         }
       });
     };
 
@@ -508,7 +524,10 @@
       const queueCol = collection(db, 'artifacts', appId, 'public', 'data', 'queue');
 
       try {
-        await setDoc(shopRef, state.shopState, { merge: true });
+        const shopSnap = await getDoc(shopRef);
+        if (!shopSnap.exists()) {
+           await setDoc(shopRef, state.shopState, { merge: true });
+        }
       } catch (e) { console.error("Init shop error", e); }
 
       if(unsubShop) unsubShop();
@@ -545,7 +564,11 @@
         state.queue = qData;
         
         if (state.customerPhone) {
-          const mine = qData.find(q => q.phone === state.customerPhone && (q.status === 'waiting' || q.status === 'active' || q.status === 'completed'));
+          const myTickets = qData.filter(q => q.phone === state.customerPhone);
+          let mine = myTickets.find(q => q.status === 'waiting' || q.status === 'active');
+          if (!mine) {
+              mine = myTickets.find(q => q.status === 'completed' && !q.hasRated);
+          }
           state.myTicket = mine || null;
         }
 
@@ -585,7 +608,7 @@
         }
 
         if(state.role === 'customer' && state.myTicket && state.myTicket.status === 'waiting') {
-           const waitingBeforeMe = state.queue.filter(q => q.status === 'waiting' && q.ticketNumber < state.myTicket.ticketNumber);
+           const waitingBeforeMe = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate && q.ticketNumber < state.myTicket.ticketNumber);
            const myPosition = waitingBeforeMe.length + 1;
            const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
            
@@ -602,14 +625,18 @@
     // --- Rendering Functions ---
     const renderAdminPanel = () => {
       const container = document.getElementById('admin-content-container');
-      const waitingQueue = state.queue.filter(q => q.status === 'waiting');
-      const completedQueue = state.queue.filter(q => q.status === 'completed');
-      const isOpen = state.shopState.isOpen;
       const today = new Date().toISOString().split('T')[0];
+      
+      // Filter queue for the selected admin date
+      const displayedQueue = state.queue.filter(q => q.bookingDate === state.adminSelectedDate);
+      const waitingQueue = displayedQueue.filter(q => q.status === 'waiting');
+      const completedQueue = displayedQueue.filter(q => q.status === 'completed');
+      
+      const isOpen = state.shopState.isOpen;
 
       let queueHTML = '';
       if (waitingQueue.length === 0) {
-        queueHTML = `<p class="text-gray-500 text-center py-8 bg-gray-900 rounded-xl border border-gray-800">لا يوجد عملاء في الانتظار حالياً.</p>`;
+        queueHTML = `<p class="text-gray-500 text-center py-8 bg-gray-900 rounded-xl border border-gray-800">لا يوجد عملاء في الانتظار في هذا اليوم.</p>`;
       } else {
         queueHTML = waitingQueue.map((q, idx) => {
           const isFirst = idx === 0;
@@ -643,7 +670,7 @@
                       <div>
                         <div class="flex items-center flex-wrap gap-2">
                           <span class="font-bold text-lg text-white">${customerNameDisplay}</span>
-                          <button data-action="edit-customer-name" data-id="${q.id}" data-phone="${q.phone}" data-current-name="${customerNameDisplay}" class="text-gray-400 hover:text-amber-500 transition relative z-10" title="تعديل الاسم" onclick="event.stopPropagation();">
+                          <button data-action="edit-customer-name" data-id="${q.id}" data-phone="${q.phone}" data-current-name="${customerNameDisplay}" class="text-gray-400 hover:text-amber-500 transition relative z-10 action-buttons-wrapper" title="تعديل الاسم">
                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                           </button>
                           ${presenceBadge}
@@ -658,7 +685,7 @@
                     </div>
                   </div>
                   
-                  <div class="flex items-center gap-1 bg-gray-900 p-1.5 rounded-lg border border-gray-700 shrink-0 relative z-10" onclick="event.stopPropagation();">
+                  <div class="action-buttons-wrapper flex items-center gap-1 bg-gray-900 p-1.5 rounded-lg border border-gray-700 shrink-0 relative z-10">
                     <!-- Swap/Replace Button -->
                     <button data-action="swap-with-top" data-id="${q.id}" class="text-blue-400 hover:text-blue-300 p-2 transition disabled:opacity-30 disabled:hover:text-blue-400" title="إدخال كبديل للدور الأول" ${isFirst ? 'disabled' : ''}>
                       <i data-lucide="arrow-up-to-line" class="w-5 h-5"></i>
@@ -714,7 +741,7 @@
 
       let completedHTML = '';
       if(completedQueue.length === 0) {
-         completedHTML = `<p class="text-gray-500 text-center py-6 text-sm">لا يوجد عملاء منتهين بعد.</p>`;
+         completedHTML = `<p class="text-gray-500 text-center py-6 text-sm">لا يوجد عملاء منتهين في هذا اليوم.</p>`;
       } else {
          completedHTML = completedQueue.map(q => {
             let ratingBadge = q.ratingGiven ? `<span class="bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded text-xs border border-amber-500/30 flex items-center gap-1"><i data-lucide="star" class="w-3 h-3 fill-current"></i> ${q.ratingGiven}</span>` : '';
@@ -729,7 +756,7 @@
                </div>
                <div class="text-gray-500 text-xs flex flex-col items-end gap-1">
                  <span>رقم: ${q.ticketNumber}</span>
-                 <button data-action="delete-customer" data-id="${q.id}" class="text-gray-600 hover:text-red-400 transition relative z-10" title="حذف السجل" onclick="event.stopPropagation();"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                 <button data-action="delete-customer" data-id="${q.id}" class="text-gray-600 hover:text-red-400 transition relative z-10 action-buttons-wrapper" title="حذف السجل"><i data-lucide="trash" class="w-4 h-4"></i></button>
                </div>
             </div>
             `;
@@ -737,6 +764,29 @@
       }
 
       const generalBookingLink = window.location.origin + window.location.pathname + '?role=customer';
+
+      // --- Generate Filter UI ---
+      const currentMonthStr = state.adminSelectedMonth || today.slice(0, 7);
+      const monthQueue = state.queue.filter(q => q.bookingDate && q.bookingDate.startsWith(currentMonthStr));
+      const dailyCounts = {};
+      monthQueue.forEach(q => { dailyCounts[q.bookingDate] = (dailyCounts[q.bookingDate] || 0) + 1; });
+      if (today.startsWith(currentMonthStr) && !dailyCounts[today]) dailyCounts[today] = 0;
+      if (!dailyCounts[state.adminSelectedDate] && state.adminSelectedDate.startsWith(currentMonthStr)) dailyCounts[state.adminSelectedDate] = 0;
+      
+      const sortedDays = Object.keys(dailyCounts).sort();
+      const daysFilterHTML = sortedDays.map(day => {
+         const count = dailyCounts[day];
+         const isSel = day === state.adminSelectedDate;
+         const d = new Date(day);
+         const dayNum = d.getDate();
+         const dayName = d.toLocaleDateString('ar-EG', { weekday: 'short' });
+         return `<button data-action="admin-filter-date" data-val="${day}" class="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition flex flex-col items-center min-w-[70px] border-2 ${isSel ? 'bg-amber-500 text-gray-900 border-amber-500 shadow-md' : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-amber-500/50'}">
+            <span class="text-xs mb-1 ${isSel ? 'text-gray-800' : 'text-gray-500'}">${dayName}</span>
+            <span class="text-xl leading-none mb-1">${dayNum}</span>
+            <span class="text-[10px] px-2 py-0.5 mt-1 rounded-full ${isSel ? 'bg-gray-900 text-amber-500' : 'bg-gray-700 text-amber-500'} font-black">${count} عميل</span>
+         </button>`;
+      }).join('');
+      // --------------------------
 
       container.innerHTML = `
         <div class="bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -909,19 +959,36 @@
           </div>
 
           <div class="lg:col-span-2 flex flex-col max-h-[85vh]">
-            <div class="bg-gray-900 rounded-t-2xl p-4 border border-gray-800 border-b-0 shrink-0 flex flex-col sm:flex-row justify-between items-center gap-4">
-               <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                 <i data-lucide="users" class="w-6 h-6 text-amber-500"></i> قائمة الانتظار (${waitingQueue.length})
-               </h3>
-               <div class="flex gap-2">
-                 <button onclick="copyToClipboard('${generalBookingLink}')" class="text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded flex items-center gap-1 text-sm border border-amber-500/20 hover:bg-amber-500 hover:text-gray-900 transition font-bold">
-                   <i data-lucide="link" class="w-4 h-4"></i> نسخ رابط الحجز
-                 </button>
+            <div class="bg-gray-900 rounded-t-2xl p-4 border border-gray-800 border-b-0 shrink-0 flex flex-col gap-4">
+               <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                   <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                     <i data-lucide="users" class="w-6 h-6 text-amber-500"></i> قائمة الانتظار (${waitingQueue.length})
+                   </h3>
+                   <div class="flex gap-2">
+                     <button onclick="copyToClipboard('${generalBookingLink}')" class="text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded flex items-center gap-1 text-sm border border-amber-500/20 hover:bg-amber-500 hover:text-gray-900 transition font-bold">
+                       <i data-lucide="link" class="w-4 h-4"></i> نسخ رابط الحجز
+                     </button>
+                   </div>
+               </div>
+               
+               <!-- Filters -->
+               <div class="bg-gray-950 p-3 rounded-xl border border-gray-800 flex items-center gap-3 overflow-hidden">
+                  <div class="shrink-0 border-l border-gray-800 pl-3">
+                     <label class="block text-[10px] text-gray-500 mb-1">تصفية بالشهر</label>
+                     <input type="month" id="admin-month-filter" value="${state.adminSelectedMonth}" class="bg-gray-800 border border-gray-700 rounded-lg p-1.5 text-xs text-white outline-none focus:border-amber-500 cursor-pointer">
+                  </div>
+                  <div class="flex-1 overflow-x-auto custom-scrollbar flex gap-2 pb-2 pt-1 px-1">
+                     ${daysFilterHTML}
+                  </div>
                </div>
             </div>
             
-            <div class="bg-gray-950 p-4 border border-gray-800 overflow-y-auto pr-2 custom-scrollbar flex-1 rounded-b-2xl shadow-inner">
+            <div class="bg-gray-950 p-4 border border-gray-800 overflow-y-auto pr-2 custom-scrollbar flex-1 shadow-inner border-b-0">
               ${queueHTML}
+            </div>
+
+            <div class="bg-gray-900 rounded-b-2xl p-4 border border-gray-800 mt-0 text-gray-500 text-sm">
+               * يتم عرض قائمة الانتظار بناءً على اليوم المحدد من الفلتر بالأعلى.
             </div>
 
           </div>
@@ -936,7 +1003,9 @@
       const isOpen = state.shopState.isOpen;
       const today = new Date().toISOString().split('T')[0];
       const isReturning = state.customerRecord && state.customerRecord.visitCount > 0;
-      const waitingCount = state.queue.filter(q => q.status === 'waiting').length;
+      
+      // Customer only sees waiting count for TODAY
+      const waitingCount = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === today).length;
       
       const showForm = !isReturning || state.showNewBookingForm;
 
@@ -965,7 +1034,7 @@
             <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex-1 w-full md:max-w-xs text-center">
                <p class="text-amber-500 font-bold text-sm flex items-center justify-center gap-2 mb-1">
                   <i data-lucide="users" class="w-4 h-4"></i>
-                  العملاء في الانتظار: <span class="text-xl font-black bg-amber-500 text-gray-900 px-2 rounded ml-1">${waitingCount}</span>
+                  العملاء في الانتظار اليوم: <span class="text-xl font-black bg-amber-500 text-gray-900 px-2 rounded ml-1">${waitingCount}</span>
                </p>
                <p class="text-gray-400 text-xs">يرجى اختيار الوقت المناسب لحضورك لتفادي الانتظار الطويل.</p>
             </div>
@@ -1153,7 +1222,8 @@
       }
       
       // 3) WAITING STATUS
-      const waitingBeforeMe = state.queue.filter(q => q.status === 'waiting' && q.ticketNumber < state.myTicket.ticketNumber);
+      const myBookingDate = state.myTicket.bookingDate;
+      const waitingBeforeMe = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === myBookingDate && q.ticketNumber < state.myTicket.ticketNumber);
       const myPosition = waitingBeforeMe.length + 1;
       
       const isUrgentTimer = state.timeLeft <= 300000 && state.timeLeft > 0;
@@ -1259,6 +1329,13 @@
               ${posHTML}
             </div>
           </div>
+          
+          ${state.myTicket.status === 'waiting' ? `
+          <button data-action="customer-cancel-booking" class="mt-6 w-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-4 py-3 rounded-xl border border-red-500/30 transition flex items-center justify-center gap-2 font-bold shadow-sm">
+             <i data-lucide="x-circle" class="w-5 h-5"></i> إلغاء حجز هذا الدور
+          </button>
+          ` : ''}
+
         </div>
 
         ${state.shopState.currentTicket > 0 ? `
@@ -1295,6 +1372,12 @@
       
       const action = target.getAttribute('data-action');
       const shopRef = doc(db, 'artifacts', appId, 'public', 'data', 'shop', 'info');
+
+      // --- Admin Date Filter ---
+      if (action === 'admin-filter-date') {
+         state.adminSelectedDate = target.getAttribute('data-val');
+         renderAdminPanel();
+      }
 
       // --- New feature: Dynamic Services & Products ---
       if (action === 'toggle-services-management') {
@@ -1338,7 +1421,7 @@
       // --- New feature: Swap Queue Placement ---
       if (action === 'swap-with-top') {
          const id = target.getAttribute('data-id');
-         const waitingQueue = state.queue.filter(q => q.status === 'waiting');
+         const waitingQueue = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
          const targetIndex = waitingQueue.findIndex(q => q.id === id);
          
          if (targetIndex > 0) { // Should not be already at top
@@ -1380,7 +1463,7 @@
          if(idxStr === null) return;
          
          const idx = parseInt(idxStr);
-         const waitingQueue = state.queue.filter(q => q.status === 'waiting');
+         const waitingQueue = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
          
          if (action === 'move-up' && idx > 0) {
             const current = waitingQueue[idx];
@@ -1515,7 +1598,7 @@
       }
 
       if (action === 'toggle-details') {
-          if (e.target.closest('button[data-action]')) return;
+          if (e.target.closest('button[data-action], .action-buttons-wrapper')) return;
 
           const id = target.getAttribute('data-id');
           const phone = target.getAttribute('data-phone');
@@ -1720,6 +1803,14 @@
          renderCustomerBooking();
       }
 
+      if (action === 'customer-cancel-booking') {
+         if (confirm("هل أنت متأكد من رغبتك في إلغاء حجزك بالكامل؟")) {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', state.myTicket.id));
+            state.myTicket = null;
+            updateViewVisibility();
+         }
+      }
+
       if (action === 'toggle-service') {
         const val = target.getAttribute('data-val');
         if (state.selectedServices.includes(val)) state.selectedServices = state.selectedServices.filter(s => s !== val);
@@ -1760,6 +1851,16 @@
         if (conflictExists) {
             alert("عذراً، هذا الموعد محجوز مسبقاً. برجاء اختيار وقت أو تاريخ آخر لتفادي الانتظار المزدوج.");
             return;
+        }
+
+        const hasTodayTicket = state.queue.some(q => 
+           q.phone === state.customerPhone && 
+           q.bookingDate === bDate
+        );
+
+        if (hasTodayTicket) {
+           alert("لقد قمت بالحجز مسبقاً في هذا اليوم. لا يمكنك حجز أكثر من دور لنفس اليوم.");
+           return;
         }
         
         const ticketNum = state.shopState.nextTicketToIssue;
