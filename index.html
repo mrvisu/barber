@@ -12,8 +12,8 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     .hidden-view { display: none !important; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px;}
+    .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px;}
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
     
     /* Animation classes */
@@ -46,7 +46,6 @@
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 
-  <!-- Header -->
   <header id="main-header" class="bg-gray-900 border-b border-amber-500/20 shadow-lg p-4 sticky top-0 z-50 hidden-view">
     <div class="max-w-6xl mx-auto flex justify-between items-center">
       <div class="flex items-center gap-3">
@@ -108,6 +107,8 @@
     <!-- VIEW: Admin Panel -->
     <div id="view-admin" class="hidden-view space-y-6">
       <div id="admin-content-container"></div>
+      <!-- Hidden file input for portfolio -->
+      <input type="file" id="portfolio-file-input" accept="image/*" class="hidden" />
     </div>
 
     <!-- VIEW: Customer Login -->
@@ -125,7 +126,6 @@
             <input type="tel" id="input-customer-phone" required class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-left" placeholder="010..." dir="ltr" />
           </div>
         </div>
-        <!-- Name Input (Hidden by default for returning checking) -->
         <div id="name-input-wrapper" class="hidden transition-all duration-500 opacity-0 h-0 overflow-hidden">
           <label class="block text-gray-400 mb-2 text-sm">الاسم الكريم (لأول مرة)</label>
           <div class="relative">
@@ -139,12 +139,12 @@
       </form>
     </div>
 
-    <!-- VIEW: Customer Booking (Not Booked Yet) -->
+    <!-- VIEW: Customer Booking -->
     <div id="view-customer-booking" class="hidden-view max-w-2xl mx-auto space-y-6">
       <div id="customer-booking-content"></div>
     </div>
 
-    <!-- VIEW: Customer Dashboard (Active Waiting / Rating) -->
+    <!-- VIEW: Customer Dashboard -->
     <div id="view-customer-dashboard" class="hidden-view max-w-2xl mx-auto space-y-6">
       <!-- Athkar Ticker -->
       <div class="marquee-container bg-amber-500/10 border border-amber-500/30 text-amber-500 py-2 rounded-xl text-sm font-bold shadow-inner mb-6">
@@ -163,6 +163,10 @@
       <div id="custom-modal-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
       <h3 id="custom-modal-title" class="text-xl font-bold text-white text-center mb-2"></h3>
       <p id="custom-modal-message" class="text-gray-400 text-center mb-6 text-sm"></p>
+      
+      <!-- Content Area for Custom Details -->
+      <div id="custom-modal-content" class="mb-6 hidden w-full text-right text-gray-300 text-sm space-y-3"></div>
+
       <div id="custom-modal-input-container" class="mb-6 hidden">
         <input type="text" id="custom-modal-input" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-center" />
       </div>
@@ -187,6 +191,7 @@
         const iconContainer = document.getElementById('custom-modal-icon');
         const titleEl = document.getElementById('custom-modal-title');
         const messageEl = document.getElementById('custom-modal-message');
+        const contentEl = document.getElementById('custom-modal-content');
         const inputContainer = document.getElementById('custom-modal-input-container');
         const inputEl = document.getElementById('custom-modal-input');
         const btnCancel = document.getElementById('custom-modal-btn-cancel');
@@ -197,6 +202,16 @@
         titleEl.innerText = options.title || 'تنبيه';
         messageEl.innerText = options.message || '';
         btnConfirm.innerText = options.confirmText || 'موافق';
+        
+        // Handle custom HTML content
+        if(options.htmlContent) {
+           contentEl.innerHTML = options.htmlContent;
+           contentEl.classList.remove('hidden');
+        } else {
+           contentEl.classList.add('hidden');
+           contentEl.innerHTML = '';
+        }
+
         if (options.type === 'prompt') {
           inputContainer.classList.remove('hidden');
           if(options.inputType === 'password') inputEl.type = 'password';
@@ -229,6 +244,44 @@
     const customConfirm = (msg) => showModal({ type: 'confirm', message: msg, iconName: 'help-circle', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'نعم، متأكد' });
     const customPrompt = (msg, def = '') => showModal({ type: 'prompt', message: msg, defaultValue: def, iconName: 'edit-3', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'حفظ' });
     const customPassword = (msg) => showModal({ type: 'prompt', inputType: 'password', message: msg, iconName: 'lock', iconBgClass: 'bg-red-500/20 text-red-500', confirmText: 'دخول' });
+    
+    // Custom modal for customer details in DB
+    const showCustomerDetailsModal = (customer) => {
+      const firstVisit = customer.firstVisitDate ? new Date(customer.firstVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
+      const lastVisit = customer.lastVisitDate ? new Date(customer.lastVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
+      const visitCount = customer.visitCount || 0;
+      
+      const htmlContent = `
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+          <div class="flex items-center gap-3 border-b border-gray-700 pb-3 mb-3">
+            <div class="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center font-bold text-xl">
+              ${customer.name ? customer.name.charAt(0) : '?'}
+            </div>
+            <div>
+               <div class="font-bold text-white text-lg">${customer.name || 'بدون اسم'}</div>
+               <div class="text-gray-400 font-mono text-sm" dir="ltr">${customer.phone}</div>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between"><span class="text-gray-500">إجمالي الزيارات:</span> <span class="font-bold text-amber-500">${visitCount} زيارة</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">تاريخ أول زيارة:</span> <span class="text-white">${firstVisit}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">تاريخ آخر زيارة:</span> <span class="text-white">${lastVisit}</span></div>
+          </div>
+          <div class="mt-4 flex gap-2">
+             <a href="https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}" target="_blank" class="flex-1 bg-green-600 hover:bg-green-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
+             <a href="tel:${customer.phone}" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="phone" class="w-4 h-4"></i> اتصال</a>
+          </div>
+        </div>
+      `;
+      showModal({ 
+        type: 'alert', 
+        title: 'تفاصيل العميل', 
+        iconName: 'user', 
+        iconBgClass: 'bg-gray-800 text-gray-300',
+        htmlContent: htmlContent,
+        confirmText: 'إغلاق'
+      });
+    };
 
 
     // --- Firebase Setup ---
@@ -307,18 +360,6 @@
     let unsubQueue = null;
     let unsubCustomers = null;
 
-    // --- DOM Elements ---
-    const views = {
-      loading: document.getElementById('view-loading'),
-      roleSelect: document.getElementById('view-role-select'),
-      admin: document.getElementById('view-admin'),
-      customerLogin: document.getElementById('view-customer-login'),
-      customerBooking: document.getElementById('view-customer-booking'),
-      customerDashboard: document.getElementById('view-customer-dashboard')
-    };
-    const header = document.getElementById('main-header');
-
-    // --- Helper Functions ---
     const formatTime = (milliseconds) => {
       if (milliseconds <= 0) return "00:00:00";
       const totalSeconds = Math.floor(milliseconds / 1000);
@@ -468,6 +509,16 @@
     };
 
     const updateViewVisibility = () => {
+      const views = {
+        loading: document.getElementById('view-loading'),
+        roleSelect: document.getElementById('view-role-select'),
+        admin: document.getElementById('view-admin'),
+        customerLogin: document.getElementById('view-customer-login'),
+        customerBooking: document.getElementById('view-customer-booking'),
+        customerDashboard: document.getElementById('view-customer-dashboard')
+      };
+      const header = document.getElementById('main-header');
+
       Object.values(views).forEach(v => v.classList.add('hidden-view'));
       
       if (state.loading) {
@@ -507,7 +558,6 @@
       lucide.createIcons();
     };
 
-    // --- Rendering Functions ---
     const renderAdminPanel = () => {
       const container = document.getElementById('admin-content-container');
       const today = new Date().toISOString().split('T')[0];
@@ -566,6 +616,15 @@
                 bookingTimeDisplay = `<div class="text-amber-500 text-sm font-bold flex items-center gap-1 mb-2 bg-amber-500/10 inline-block px-2 py-1 rounded"><i data-lucide="clock" class="w-4 h-4 inline"></i> الموعد: الساعة ${q.bookingTime}</div>`;
              }
 
+             // Extract created time
+             let createdTimeStr = '';
+             if (q.timestamp && q.timestamp.toDate) {
+                 createdTimeStr = q.timestamp.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+             } else if (q.timestamp && q.timestamp.seconds) { 
+                 createdTimeStr = new Date(q.timestamp.seconds * 1000).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+             }
+             let createdTimeHTML = createdTimeStr ? `<div class="text-xs text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="calendar-plus" class="w-3 h-3"></i> وقت الطلب: ${createdTimeStr}</div>` : '';
+
              return `
                <div class="bg-gray-800 rounded-xl border ${isFirst ? 'border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.15)]' : 'border-gray-700'} transition-all mb-4 relative overflow-hidden group">
                  ${isFirst ? '<div class="absolute top-0 right-0 w-1.5 bg-amber-500 h-full"></div>' : ''}
@@ -587,6 +646,7 @@
                              ${presenceBadge}
                            </div>
                            <span class="text-sm text-gray-400 block font-mono" dir="ltr">${q.phone}</span>
+                           ${createdTimeHTML}
                          </div>
                        </div>
                        <div class="text-sm text-gray-300 mt-2 bg-gray-900/80 p-2 rounded-lg inline-block border border-gray-700/50">
@@ -608,8 +668,8 @@
                          <i data-lucide="arrow-down" class="w-5 h-5"></i>
                        </button>
                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
-                       <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition" title="إلغاء الحجز">
-                         <i data-lucide="x" class="w-5 h-5"></i>
+                       <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-white hover:bg-red-500 p-2 rounded-lg transition border border-transparent hover:border-red-400" title="إلغاء الحجز">
+                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                        </button>
                      </div>
                    </div>
@@ -667,6 +727,7 @@
                      </div>
                   </div>
                   <div class="flex sm:flex-col items-center justify-end gap-2 border-t sm:border-t-0 border-gray-700 pt-2 sm:pt-0">
+                    <button data-action="trigger-portfolio-upload" class="bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-amber-500/30"><i data-lucide="camera" class="w-3 h-3"></i> صورة للعمل</button>
                     <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-red-500/20"><i data-lucide="trash-2" class="w-3 h-3"></i> حذف السجل</button>
                   </div>
                </div>
@@ -689,12 +750,12 @@
          dbRowsHTML = filteredDB.map(c => {
             const dateStr = c.lastVisitDate ? new Date(c.lastVisitDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : '---';
             return `
-               <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition group">
-                  <td class="p-3 text-white font-bold">${c.name || '---'}</td>
+               <tr class="border-b border-gray-800 hover:bg-gray-800/70 transition group cursor-pointer" data-action="view-db-customer" data-phone="${c.phone}">
+                  <td class="p-3 text-white font-bold group-hover:text-amber-500 transition-colors">${c.name || '---'}</td>
                   <td class="p-3 text-gray-400 font-mono text-sm" dir="ltr">${c.phone}</td>
                   <td class="p-3 text-center text-amber-500 font-bold">${c.visitCount || 0}</td>
                   <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
-                  <td class="p-3">
+                  <td class="p-3" onclick="event.stopPropagation();">
                      <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <a href="https://wa.me/${c.phone.replace(/[^0-9]/g, '')}" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
                         <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال"><i data-lucide="phone" class="w-4 h-4"></i></a>
@@ -824,10 +885,10 @@
            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
               <!-- Gallery -->
               <div class="space-y-4">
-                 <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> صور إعلانات الصالون للعملاء</h4>
+                 <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> صور إعلانات ومعرض الصالون</h4>
                  <div class="flex flex-col gap-3">
                     <input type="file" id="input-new-gallery-file" accept="image/*" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-800 file:text-white hover:file:bg-gray-700 cursor-pointer transition" />
-                    <button data-action="upload-gallery" class="w-full bg-gray-800 text-white hover:bg-amber-500 hover:text-gray-900 px-4 py-3 rounded-xl font-bold text-sm transition flex justify-center items-center gap-2 border border-gray-700 hover:border-amber-500"><i data-lucide="upload-cloud" class="w-5 h-5"></i> رفع الصورة للعملاء</button>
+                    <button data-action="upload-gallery" class="w-full bg-gray-800 text-white hover:bg-amber-500 hover:text-gray-900 px-4 py-3 rounded-xl font-bold text-sm transition flex justify-center items-center gap-2 border border-gray-700 hover:border-amber-500"><i data-lucide="upload-cloud" class="w-5 h-5"></i> رفع الصورة يدوياً</button>
                     <div id="upload-progress" class="hidden text-amber-500 text-xs font-bold animate-pulse text-center bg-amber-500/10 p-2 rounded-lg">جاري معالجة ورفع الصورة...</div>
                  </div>
                  <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto custom-scrollbar pr-1 mt-2">
@@ -1197,7 +1258,6 @@
       }
       
       // 3) WAITING STATUS
-      // Compare ONLY with waiting customers on the SAME DATE
       const sameDayWaiting = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate);
       const waitingBeforeMe = sameDayWaiting.filter(q => q.ticketNumber < state.myTicket.ticketNumber);
       const myPosition = waitingBeforeMe.length + 1;
@@ -1337,9 +1397,8 @@
       initSlider();
     };
 
-    // --- Action Handlers (Event Delegation) ---
     document.addEventListener('click', async (e) => {
-      let target = e.target.closest('button, i[data-action], div[data-action]'); 
+      let target = e.target.closest('button, i[data-action], div[data-action], tr[data-action]'); 
       if (!target) return;
       
       const action = target.getAttribute('data-action');
@@ -1359,6 +1418,15 @@
              state.adminViewTab = 'completed';
          }
          renderAdminPanel();
+      }
+
+      // --- Customer DB Interactions ---
+      if (action === 'view-db-customer') {
+         const phone = target.getAttribute('data-phone');
+         const customer = state.customersDB.find(c => c.phone === phone);
+         if(customer) {
+             showCustomerDetailsModal(customer);
+         }
       }
 
       if (action === 'toggle-services-management') {
@@ -1471,51 +1539,13 @@
          }
       }
 
-      // Add Gallery Image
-      if (action === 'upload-gallery') {
-         const fileInput = document.getElementById('input-new-gallery-file');
-         const file = fileInput.files[0];
-         if (!file) return customAlert("برجاء اختيار صورة من جهازك أولاً.");
-         
-         const progressEl = document.getElementById('upload-progress');
-         if(progressEl) progressEl.classList.remove('hidden');
+      // --- Add Portfolio Gallery Image ---
+      if (action === 'trigger-portfolio-upload') {
+         document.getElementById('portfolio-file-input').click();
+      }
 
-         const reader = new FileReader();
-         reader.onload = (e) => {
-             const img = new Image();
-             img.onload = async () => {
-                 const canvas = document.createElement('canvas');
-                 let width = img.width;
-                 let height = img.height;
-                 const MAX_WIDTH = 800; // Limit width to keep Base64 small
-                 
-                 if (width > MAX_WIDTH) {
-                     height = Math.round(height * (MAX_WIDTH / width));
-                     width = MAX_WIDTH;
-                 }
-                 
-                 canvas.width = width;
-                 canvas.height = height;
-                 const ctx = canvas.getContext('2d');
-                 ctx.drawImage(img, 0, 0, width, height);
-                 
-                 const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
-                 
-                 try {
-                     const currentGallery = state.shopState.gallery || [];
-                     await updateDoc(shopRef, { gallery: [...currentGallery, dataUrl] });
-                     
-                     fileInput.value = '';
-                     if(progressEl) progressEl.classList.add('hidden');
-                 } catch(error) {
-                     console.error("Firestore upload error", error);
-                     if(progressEl) progressEl.classList.add('hidden');
-                     customAlert("حدث خطأ أثناء حفظ الصورة. تأكد من حجم الصورة.");
-                 }
-             };
-             img.src = e.target.result;
-         };
-         reader.readAsDataURL(file);
+      if (action === 'upload-gallery') {
+         document.getElementById('input-new-gallery-file').click();
       }
       
       // Remove Gallery Image
@@ -1548,16 +1578,20 @@
            const custSnap = await getDoc(custRef);
            if (custSnap.exists()) {
               const data = custSnap.data();
-              await updateDoc(custRef, {
+              // Only update firstVisitDate if it doesn't exist
+              const updateData = {
                  visitCount: (data.visitCount || 1) + 1,
                  lastVisitDate: new Date().toISOString(),
                  name: activeTicket.name
-              });
+              };
+              if(!data.firstVisitDate) updateData.firstVisitDate = new Date().toISOString();
+              await updateDoc(custRef, updateData);
            } else {
               await setDoc(custRef, {
                  phone: activeTicket.phone,
                  name: activeTicket.name,
                  visitCount: 1,
+                 firstVisitDate: new Date().toISOString(),
                  lastVisitDate: new Date().toISOString()
               });
            }
@@ -1652,7 +1686,7 @@
       }
 
       if (action === 'delete-customer') {
-        const ok = await customConfirm('هل أنت متأكد من حذف هذا العميل من القائمة نهائياً؟');
+        const ok = await customConfirm('هل أنت متأكد من إلغاء وحذف هذا الحجز نهائياً من القائمة؟');
         if(ok) {
           const id = target.getAttribute('data-id');
           await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', id));
@@ -1750,6 +1784,7 @@
                     phone: phoneInput,
                     name: nameInput,
                     visitCount: 0, 
+                    firstVisitDate: new Date().toISOString(),
                     lastVisitDate: new Date().toISOString()
                 });
             }
@@ -1892,6 +1927,7 @@
               phone: state.customerPhone,
               name: state.customerName,
               visitCount: 0,
+              firstVisitDate: new Date().toISOString(),
               lastVisitDate: new Date().toISOString()
            });
         }
@@ -1916,7 +1952,7 @@
         }
       }
       if (target.id === 'btn-change-account') {
-        const ok = await customConfirm("هل تريد تسجيل الخروج والعودة للرئيسية؟");
+        const ok = await customConfirm("هل تريد العودة للرئيسية وتسجيل الخروج؟");
         if(ok) {
            state.role = null;
            state.customerPhone = '';
@@ -1934,6 +1970,65 @@
            updateViewVisibility();
         }
       }
+    });
+
+    // Handle Image uploads mapping to shared logic
+    const handleImageUpload = (fileInput, progressElId, shopRef) => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        
+        const progressEl = document.getElementById(progressElId);
+        if(progressEl) progressEl.classList.remove('hidden');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX_WIDTH = 800; // Limit width to keep Base64 small
+                
+                if (width > MAX_WIDTH) {
+                    height = Math.round(height * (MAX_WIDTH / width));
+                    width = MAX_WIDTH;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+                
+                try {
+                    const currentGallery = state.shopState.gallery || [];
+                    await updateDoc(shopRef, { gallery: [...currentGallery, dataUrl] });
+                    
+                    fileInput.value = '';
+                    if(progressEl) progressEl.classList.add('hidden');
+                    customAlert("تم رفع الصورة وإضافتها لمعرض الأعمال بنجاح!");
+                } catch(error) {
+                    console.error("Firestore upload error", error);
+                    if(progressEl) progressEl.classList.add('hidden');
+                    customAlert("حدث خطأ أثناء حفظ الصورة. تأكد من حجم الصورة.");
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Listener for specific hidden portfolio/gallery inputs
+    document.addEventListener('change', (e) => {
+       const shopRef = doc(db, 'artifacts', appId, 'public', 'data', 'shop', 'info');
+       if (e.target.id === 'input-new-gallery-file') {
+          handleImageUpload(e.target, 'upload-progress', shopRef);
+       }
+       if (e.target.id === 'portfolio-file-input') {
+          // You could show a global progress spinner here, but we will reuse logic
+          handleImageUpload(e.target, null, shopRef);
+       }
     });
 
     document.getElementById('form-customer-login').addEventListener('submit', async (e) => {
