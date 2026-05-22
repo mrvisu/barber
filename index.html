@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tito Barber Shop</title>
   <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💈</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -155,25 +155,23 @@
       <div id="customer-dashboard-content"></div>
     </div>
 
-    <!-- Custom Modals -->
-    <div id="custom-modal-overlay" class="fixed inset-0 bg-gray-950/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-      <div id="custom-modal-box" class="bg-gray-900 border border-gray-700 rounded-3xl p-6 md:p-8 shadow-2xl max-w-md w-full transform scale-95 transition-transform duration-300">
-        <div id="custom-modal-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
-        <h3 id="custom-modal-title" class="text-xl font-bold text-white text-center mb-2"></h3>
-        <p id="custom-modal-message" class="text-gray-400 text-center mb-6 text-sm"></p>
-        
-        <div id="custom-modal-input-container" class="mb-6 hidden">
-          <input type="text" id="custom-modal-input" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-center" />
-        </div>
+  </main>
 
-        <div id="custom-modal-buttons" class="flex gap-3 justify-center">
-          <button id="custom-modal-btn-cancel" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-xl transition hidden">إلغاء</button>
-          <button id="custom-modal-btn-confirm" class="flex-1 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-3 px-4 rounded-xl transition shadow-lg">موافق</button>
-        </div>
+  <!-- Custom Modal Overlay -->
+  <div id="custom-modal-overlay" class="fixed inset-0 bg-gray-950/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div id="custom-modal-box" class="bg-gray-900 border border-gray-700 rounded-3xl p-6 md:p-8 shadow-2xl max-w-md w-full transform scale-95 transition-transform duration-300">
+      <div id="custom-modal-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
+      <h3 id="custom-modal-title" class="text-xl font-bold text-white text-center mb-2"></h3>
+      <p id="custom-modal-message" class="text-gray-400 text-center mb-6 text-sm"></p>
+      <div id="custom-modal-input-container" class="mb-6 hidden">
+        <input type="text" id="custom-modal-input" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-center" />
+      </div>
+      <div id="custom-modal-buttons" class="flex gap-3 justify-center">
+        <button id="custom-modal-btn-cancel" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-xl transition hidden">إلغاء</button>
+        <button id="custom-modal-btn-confirm" class="flex-1 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-3 px-4 rounded-xl transition shadow-lg">موافق</button>
       </div>
     </div>
-
-  </main>
+  </div>
 
   <!-- Application Logic -->
   <script type="module">
@@ -181,7 +179,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, addDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-    // --- Custom Modal Logic ---
+    // --- Modal Logic ---
     const showModal = (options) => {
       return new Promise((resolve) => {
         const overlay = document.getElementById('custom-modal-overlay');
@@ -194,89 +192,44 @@
         const btnCancel = document.getElementById('custom-modal-btn-cancel');
         const btnConfirm = document.getElementById('custom-modal-btn-confirm');
 
-        // Setup UI
-        iconContainer.className = `w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${options.iconBgClass || 'bg-amber-500/20 text-amber-500 border border-amber-500/30'}`;
+        iconContainer.className = `w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${options.iconBgClass || 'bg-amber-500/20 text-amber-500'}`;
         iconContainer.innerHTML = `<i data-lucide="${options.iconName || 'info'}" class="w-8 h-8"></i>`;
         titleEl.innerText = options.title || 'تنبيه';
         messageEl.innerText = options.message || '';
-        
         btnConfirm.innerText = options.confirmText || 'موافق';
-        btnConfirm.className = `flex-1 font-bold py-3 px-4 rounded-xl transition shadow-lg ${options.confirmBtnClass || 'bg-amber-500 hover:bg-amber-400 text-gray-900'}`;
-
-        if (options.type === 'prompt' || options.type === 'password') {
+        if (options.type === 'prompt') {
           inputContainer.classList.remove('hidden');
-          inputEl.type = options.type === 'password' ? 'password' : 'text';
+          if(options.inputType === 'password') inputEl.type = 'password';
+          else inputEl.type = 'text';
           inputEl.value = options.defaultValue || '';
-          inputEl.placeholder = options.placeholder || '';
           setTimeout(() => inputEl.focus(), 100);
         } else {
           inputContainer.classList.add('hidden');
         }
-
-        if (options.type === 'confirm' || options.type === 'prompt' || options.type === 'password') {
-          btnCancel.classList.remove('hidden');
-        } else {
-          btnCancel.classList.add('hidden');
-        }
-
+        btnCancel.classList.toggle('hidden', options.type !== 'confirm' && options.type !== 'prompt');
         lucide.createIcons();
-
-        // Show Modal
         overlay.classList.remove('hidden');
-        void overlay.offsetWidth; // Trigger reflow
+        void overlay.offsetWidth;
         overlay.classList.add('opacity-100');
         box.classList.remove('scale-95');
         box.classList.add('scale-100');
 
-        // Cleanup and Resolve
-        const cleanup = (value) => {
+        const cleanup = (val) => {
           overlay.classList.remove('opacity-100');
           box.classList.remove('scale-100');
           box.classList.add('scale-95');
-          setTimeout(() => {
-            overlay.classList.add('hidden');
-            btnConfirm.removeEventListener('click', handleConfirm);
-            btnCancel.removeEventListener('click', handleCancel);
-            inputEl.removeEventListener('keydown', handleEnter);
-            resolve(value);
-          }, 300);
+          setTimeout(() => { overlay.classList.add('hidden'); resolve(val); }, 300);
         };
-
-        const handleConfirm = () => {
-          if (options.type === 'prompt' || options.type === 'password') {
-            cleanup(inputEl.value);
-          } else {
-            cleanup(true);
-          }
-        };
-
-        const handleCancel = () => cleanup(options.type === 'prompt' || options.type === 'password' ? null : false);
-        
-        const handleEnter = (e) => {
-            if (e.key === 'Enter') handleConfirm();
-        };
-
-        btnConfirm.addEventListener('click', handleConfirm);
-        btnCancel.addEventListener('click', handleCancel);
-        inputEl.addEventListener('keydown', handleEnter);
+        btnConfirm.onclick = () => cleanup(options.type === 'prompt' ? inputEl.value : true);
+        btnCancel.onclick = () => cleanup(null);
       });
     };
 
-    const customAlert = (message, title = 'تنبيه') => {
-      return showModal({ type: 'alert', message, title, iconName: 'bell', iconBgClass: 'bg-amber-500/20 text-amber-500 border border-amber-500/30' });
-    };
+    const customAlert = (msg) => showModal({ type: 'alert', message: msg, iconName: 'bell', iconBgClass: 'bg-blue-500/20 text-blue-500' });
+    const customConfirm = (msg) => showModal({ type: 'confirm', message: msg, iconName: 'help-circle', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'نعم، متأكد' });
+    const customPrompt = (msg, def = '') => showModal({ type: 'prompt', message: msg, defaultValue: def, iconName: 'edit-3', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'حفظ' });
+    const customPassword = (msg) => showModal({ type: 'prompt', inputType: 'password', message: msg, iconName: 'lock', iconBgClass: 'bg-red-500/20 text-red-500', confirmText: 'دخول' });
 
-    const customConfirm = (message, title = 'تأكيد') => {
-      return showModal({ type: 'confirm', message, title, iconName: 'help-circle', iconBgClass: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' });
-    };
-
-    const customPrompt = (message, defaultValue = '') => {
-      return showModal({ type: 'prompt', message, title: 'إدخال بيانات', defaultValue, iconName: 'edit-2', iconBgClass: 'bg-green-500/20 text-green-400 border border-green-500/30' });
-    };
-
-    const customPassword = (message) => {
-      return showModal({ type: 'password', message, title: 'كلمة المرور مطلوبة', iconName: 'lock', iconBgClass: 'bg-red-500/20 text-red-400 border border-red-500/30', confirmBtnClass: 'bg-red-500 hover:bg-red-400 text-white' });
-    };
 
     // --- Firebase Setup ---
     const firebaseConfig = {
@@ -293,6 +246,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const appId = 'tito-barber-app';
+    const ADMIN_PASSWORD = "12345"; // الرقم السري الخاص بتيتو
 
     // Default Images for the slider
     const DEFAULT_GALLERY = [
@@ -319,6 +273,7 @@
         gallery: DEFAULT_GALLERY
       },
       queue: [],
+      customersDB: [], // To store fetched customers
       customerPhone: '',
       customerName: '', 
       customerRecord: null, 
@@ -329,7 +284,11 @@
       showNewBookingForm: false,
       tempBookingDate: '', 
       tempBookingTime: '',
-      showServicesManagement: false,
+      
+      // Admin View Filters
+      adminSelectedDate: new Date().toISOString().split('T')[0],
+      adminSelectedMonth: new Date().toISOString().slice(0, 7),
+      adminViewTab: 'waiting',
       
       // Admin Direct Add State
       adminAdd: {
@@ -339,16 +298,14 @@
          time: '',
          services: [],
          products: []
-      },
-      customers: [] // ADDED FOR CUSTOMERS DATABASE
+      }
     };
 
     let timerInterval = null;
     let sliderInterval = null;
     let unsubShop = null;
     let unsubQueue = null;
-    let unsubCustomers = null; // ADDED FOR CUSTOMERS LISTENER
-    const ADMIN_PASSWORD = "12345"; // الرقم السري للإدارة
+    let unsubCustomers = null;
 
     // --- DOM Elements ---
     const views = {
@@ -373,7 +330,7 @@
 
     const copyToClipboard = (text) => {
       navigator.clipboard.writeText(text).then(() => {
-        alert("تم نسخ الرابط بنجاح! يمكنك إرساله الآن.");
+        customAlert("تم نسخ الرابط بنجاح! يمكنك إرساله الآن.");
       }).catch(err => {
         console.error('Could not copy text: ', err);
       });
@@ -550,611 +507,470 @@
       lucide.createIcons();
     };
 
-    // --- Firebase Initialization & Listeners ---
-    const initApp = async () => {
-      lucide.createIcons();
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const phoneParam = urlParams.get('phone');
-      const nameParam = urlParams.get('name');
-      const roleParam = urlParams.get('role');
-      
-      const isCustomerLink = roleParam === 'customer' || phoneParam;
-
-      if (isCustomerLink) {
-         // Hide admin role button for customer links
-         const adminBtn = document.getElementById('btn-role-admin');
-         const cardsContainer = document.getElementById('role-cards-container');
-         if (adminBtn && cardsContainer) {
-             adminBtn.remove();
-             cardsContainer.classList.remove('md:grid-cols-2');
-         }
-         state.role = 'customer';
-      }
-      
-      if(phoneParam) {
-        state.customerPhone = phoneParam;
-        if(nameParam) state.customerName = nameParam;
-        state.role = 'customer'; 
-        await fetchCustomerRecord(phoneParam);
-      }
-
-      if (!auth) return;
-
-      try {
-        await signInAnonymously(auth);
-      } catch (error) {
-        console.error("Auth error:", error);
-      }
-
-      onAuthStateChanged(auth, (u) => {
-        state.user = u;
-        if (u) {
-          setupFirebaseListeners();
-        }
-        state.loading = false;
-        updateViewVisibility();
-      });
-
-      document.addEventListener('input', (e) => {
-         if (e.target.id === 'admin-add-name') state.adminAdd.name = e.target.value;
-         if (e.target.id === 'admin-add-phone') state.adminAdd.phone = e.target.value;
-         
-         // Search customers logic
-         if (e.target.id === 'customer-search') {
-            const query = e.target.value.toLowerCase();
-            const cards = document.querySelectorAll('.customer-card-item');
-            cards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                card.style.display = text.includes(query) ? 'flex' : 'none';
-            });
-         }
-      });
-
-      document.addEventListener('change', (e) => {
-         if (e.target.id === 'input-booking-date') {
-             state.tempBookingDate = e.target.value;
-             updateBookingTimes();
-         }
-         if (e.target.id === 'input-booking-time') {
-             state.tempBookingTime = e.target.value;
-         }
-         if (e.target.id === 'admin-add-date') {
-             state.adminAdd.date = e.target.value;
-             updateBookingTimes();
-         }
-         if (e.target.id === 'admin-add-time') {
-             state.adminAdd.time = e.target.value;
-         }
-         if (e.target.id === 'admin-month-filter') {
-             state.adminSelectedMonth = e.target.value;
-             const today = new Date().toISOString().split('T')[0];
-             if(today.startsWith(state.adminSelectedMonth)) {
-                 state.adminSelectedDate = today;
-             } else {
-                 const firstDay = state.queue.filter(q => q.bookingDate?.startsWith(state.adminSelectedMonth)).map(q=>q.bookingDate).sort()[0];
-                 state.adminSelectedDate = firstDay || `${state.adminSelectedMonth}-01`;
-             }
-             renderAdminPanel();
-         }
-      });
-    };
-
-    const setupFirebaseListeners = async () => {
-      if (!db || !state.user) return;
-
-      const shopRef = doc(db, 'artifacts', appId, 'public', 'data', 'shop', 'info');
-      const queueCol = collection(db, 'artifacts', appId, 'public', 'data', 'queue');
-
-      try {
-        const shopSnap = await getDoc(shopRef);
-        if (!shopSnap.exists()) {
-           await setDoc(shopRef, state.shopState, { merge: true });
-        }
-      } catch (e) { console.error("Init shop error", e); }
-
-      if(unsubShop) unsubShop();
-      unsubShop = onSnapshot(shopRef, (docSnap) => {
-        if (docSnap.exists()) {
-          state.shopState = { ...state.shopState, ...docSnap.data() };
-          if(!state.shopState.gallery || state.shopState.gallery.length === 0) {
-             state.shopState.gallery = DEFAULT_GALLERY;
-          }
-          // Ensure services and products arrays exist
-          if(!state.shopState.services) state.shopState.services = [];
-          if(!state.shopState.products) state.shopState.products = [];
-          
-          updateTimerLogic();
-          updateViewVisibility();
-        }
-      });
-
-      if(unsubQueue) unsubQueue();
-      unsubQueue = onSnapshot(queueCol, (snapshot) => {
-        const qData = [];
-        snapshot.forEach(doc => qData.push({ id: doc.id, ...doc.data() }));
-        
-        qData.sort((a, b) => {
-           if (a.bookingDate && b.bookingDate && a.bookingDate !== b.bookingDate) {
-               return a.bookingDate.localeCompare(b.bookingDate);
-           }
-           if (a.bookingTime && b.bookingTime && a.bookingTime !== b.bookingTime) {
-               return a.bookingTime.localeCompare(b.bookingTime);
-           }
-           return a.ticketNumber - b.ticketNumber;
-        });
-        
-        state.queue = qData;
-        
-        if (state.customerPhone) {
-          const mine = qData.find(q => q.phone === state.customerPhone && (q.status === 'waiting' || q.status === 'active' || q.status === 'completed'));
-          state.myTicket = mine || null;
-        }
-
-        if (state.role === 'admin') {
-            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // Retention for 30 Days
-            qData.forEach(async (q) => {
-               if (q.status === 'completed' && q.timestamp) {
-                   const ticketTime = q.timestamp.toMillis ? q.timestamp.toMillis() : Date.now();
-                   if (Date.now() - ticketTime > THIRTY_DAYS_MS) {
-                       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', q.id)); } catch(e){}
-                   }
-               }
-            });
-        }
-
-        updateViewVisibility();
-      });
-    };
-
-    const listenToCustomers = () => {
-       if (!db) return;
-       const custCol = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
-       if(unsubCustomers) unsubCustomers();
-       unsubCustomers = onSnapshot(custCol, (snap) => {
-          const cData = [];
-          snap.forEach(doc => cData.push(doc.data()));
-          cData.sort((a,b) => new Date(b.lastVisitDate) - new Date(a.lastVisitDate));
-          state.customers = cData;
-          if (state.role === 'admin') renderAdminPanel();
-       });
-    };
-
-    const updateTimerLogic = () => {
-      if (timerInterval) clearInterval(timerInterval);
-      
-      const tick = () => {
-        if (state.shopState.timerEndTime > 0) {
-          const remaining = state.shopState.timerEndTime - Date.now();
-          state.timeLeft = remaining > 0 ? remaining : 0;
-        } else {
-          state.timeLeft = 0;
-        }
-        
-        const timerEls = document.querySelectorAll('.timer-display');
-        timerEls.forEach(el => { el.innerText = formatTime(state.timeLeft); });
-        
-        if (state.timeLeft === 0 && state.shopState.timerEndTime > 0) {
-             state.shopState.timerEndTime = 0;
-             updateViewVisibility();
-        }
-
-        if(state.role === 'customer' && state.myTicket && state.myTicket.status === 'waiting') {
-           const waitingBeforeMe = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate && q.ticketNumber < state.myTicket.ticketNumber);
-           const myPosition = waitingBeforeMe.length + 1;
-           const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
-           
-           if(is10MinWarning && !document.getElementById('warning-10min')) {
-              updateViewVisibility();
-           }
-        }
-      };
-      
-      tick();
-      timerInterval = setInterval(tick, 1000);
-    };
-
     // --- Rendering Functions ---
     const renderAdminPanel = () => {
       const container = document.getElementById('admin-content-container');
       const today = new Date().toISOString().split('T')[0];
-      
-      // Initialize selected date and month if they are not set yet
-      if (!state.adminSelectedDate) state.adminSelectedDate = today;
-      if (!state.adminSelectedMonth) state.adminSelectedMonth = today.slice(0, 7);
-      
-      // Filter queue for the selected admin date
-      const displayedQueue = state.queue.filter(q => q.bookingDate === state.adminSelectedDate);
-      const waitingQueue = displayedQueue.filter(q => q.status === 'waiting');
-      const completedQueue = displayedQueue.filter(q => q.status === 'completed');
-      
+      if(!state.adminSelectedDate) state.adminSelectedDate = today;
+
       const isOpen = state.shopState.isOpen;
+      
+      const allWaiting = state.queue.filter(q => q.status === 'waiting');
+      const allCompleted = state.queue.filter(q => q.status === 'completed');
+      
+      // Filter by selected date
+      const waitingQueue = allWaiting.filter(q => q.bookingDate === state.adminSelectedDate);
+      const completedQueue = allCompleted.filter(q => q.bookingDate === state.adminSelectedDate);
+      const activeTicket = state.queue.find(q => q.status === 'active');
+      const nextInLine = waitingQueue.length > 0 ? waitingQueue[0] : null;
+
+      // Generate Days Filter for the selected month
+      const uniqueDays = [...new Set(state.queue.map(q => q.bookingDate))].filter(d => d && d.startsWith(state.adminSelectedMonth)).sort();
+      if (!uniqueDays.includes(today) && today.startsWith(state.adminSelectedMonth)) {
+         uniqueDays.unshift(today); // Always show today if it's in the selected month
+      }
+      
+      const daysFilterHTML = uniqueDays.map(date => {
+          const isSelected = date === state.adminSelectedDate;
+          const dayName = new Date(date).toLocaleDateString('ar-EG', { weekday: 'short' });
+          const dayNum = date.split('-')[2];
+          const count = allWaiting.filter(q => q.bookingDate === date).length;
+          return `
+            <button data-action="admin-select-date" data-val="${date}" class="flex flex-col items-center justify-center min-w-[70px] px-3 py-2 rounded-xl border ${isSelected ? 'bg-amber-500 text-gray-900 border-amber-500 shadow-md transform -translate-y-1' : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'} transition-all shrink-0">
+               <span class="text-xs font-bold">${dayName}</span>
+               <span class="text-lg font-black">${dayNum}</span>
+               <span class="text-[10px] bg-black/20 px-1.5 rounded-full mt-1">${count} دور</span>
+            </button>
+          `;
+      }).join('');
 
       let queueHTML = '';
-      if (waitingQueue.length === 0) {
-        queueHTML = `<p class="text-gray-500 text-center py-8 bg-gray-900 rounded-xl border border-gray-800">لا يوجد عملاء في الانتظار في هذا اليوم.</p>`;
-      } else {
-        queueHTML = waitingQueue.map((q, idx) => {
-          const isFirst = idx === 0;
-          const isLast = idx === waitingQueue.length - 1;
-          const customerNameDisplay = q.name ? q.name : 'بدون اسم';
-          
-          let presenceBadge = '';
-          if(q.presenceStatus === 'here') {
-            presenceBadge = `<span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded border border-green-500/30 font-bold ml-2">متواجد بالصالون</span>`;
-          } else {
-            presenceBadge = `<span class="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30 font-bold ml-2">حجز خارجي (لم يصل)</span>`;
-          }
+      if (state.adminViewTab === 'waiting') {
+         if (waitingQueue.length === 0) {
+           queueHTML = `<div class="text-gray-500 text-center py-12 bg-gray-900/50 rounded-xl border border-gray-800 border-dashed flex flex-col items-center justify-center"><i data-lucide="inbox" class="w-10 h-10 mb-3 opacity-20"></i><p>لا يوجد عملاء في الانتظار لهذا اليوم.</p></div>`;
+         } else {
+           queueHTML = waitingQueue.map((q, idx) => {
+             const isFirst = idx === 0;
+             const isLast = idx === waitingQueue.length - 1;
+             const customerNameDisplay = q.name ? q.name : 'بدون اسم';
+             
+             let presenceBadge = '';
+             if(q.presenceStatus === 'here') {
+               presenceBadge = `<span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded border border-green-500/30 font-bold ml-2">متواجد بالصالون</span>`;
+             } else {
+               presenceBadge = `<span class="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30 font-bold ml-2">حجز خارجي (لم يصل)</span>`;
+             }
 
-          let bookingTimeDisplay = '';
-          if (q.bookingDate && q.bookingTime) {
-             bookingTimeDisplay = `<div class="text-amber-500 text-sm font-bold flex items-center gap-1 mb-2 bg-amber-500/10 inline-block px-2 py-1 rounded"><i data-lucide="calendar-clock" class="w-4 h-4 inline"></i> موعد الحجز: ${q.bookingDate} الساعة ${q.bookingTime}</div>`;
-          }
+             let bookingTimeDisplay = '';
+             if (q.bookingDate && q.bookingTime) {
+                bookingTimeDisplay = `<div class="text-amber-500 text-sm font-bold flex items-center gap-1 mb-2 bg-amber-500/10 inline-block px-2 py-1 rounded"><i data-lucide="clock" class="w-4 h-4 inline"></i> الموعد: الساعة ${q.bookingTime}</div>`;
+             }
 
-          return `
-            <div class="bg-gray-800 rounded-xl border ${isFirst ? 'border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.1)]' : 'border-gray-700'} transition-all mb-4 relative overflow-hidden group">
-              ${isFirst ? '<div class="absolute top-0 right-0 w-1 bg-amber-500 h-full"></div>' : ''}
-              
-              <div class="p-4 cursor-pointer hover:bg-gray-700/30 transition" data-action="toggle-details" data-id="${q.id}" data-phone="${q.phone}">
-                <div class="flex flex-col md:flex-row justify-between md:items-start gap-4">
-                  <div class="flex-1 pointer-events-none">
-                    ${bookingTimeDisplay}
-                    <div class="flex items-center gap-3 mb-2 pointer-events-auto">
-                      <span class="bg-amber-500 text-gray-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md shrink-0">
-                        ${q.ticketNumber}
-                      </span>
-                      <div>
-                        <div class="flex items-center flex-wrap gap-2">
-                          <span class="font-bold text-lg text-white">${customerNameDisplay}</span>
-                          <button data-action="edit-customer-name" data-id="${q.id}" data-phone="${q.phone}" data-current-name="${customerNameDisplay}" class="text-gray-400 hover:text-amber-500 transition relative z-10 action-buttons-wrapper" title="تعديل الاسم">
-                            <i data-lucide="edit-2" class="w-4 h-4"></i>
-                          </button>
-                          ${presenceBadge}
-                        </div>
-                        <span class="text-sm text-gray-400 block" dir="ltr">${q.phone}</span>
+             return `
+               <div class="bg-gray-800 rounded-xl border ${isFirst ? 'border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.15)]' : 'border-gray-700'} transition-all mb-4 relative overflow-hidden group">
+                 ${isFirst ? '<div class="absolute top-0 right-0 w-1.5 bg-amber-500 h-full"></div>' : ''}
+                 
+                 <div class="p-4 cursor-pointer hover:bg-gray-700/50 transition" data-action="toggle-details" data-id="${q.id}" data-phone="${q.phone}">
+                   <div class="flex flex-col md:flex-row justify-between md:items-start gap-4">
+                     <div class="flex-1 pointer-events-none">
+                       ${bookingTimeDisplay}
+                       <div class="flex items-center gap-3 mb-2 pointer-events-auto">
+                         <span class="bg-amber-500 text-gray-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md shrink-0">
+                           ${q.ticketNumber}
+                         </span>
+                         <div>
+                           <div class="flex items-center flex-wrap gap-2">
+                             <span class="font-bold text-lg text-white">${customerNameDisplay}</span>
+                             <button data-action="edit-customer-name" data-id="${q.id}" data-phone="${q.phone}" data-current-name="${customerNameDisplay}" class="text-gray-400 hover:text-amber-500 transition relative z-10" title="تعديل الاسم" onclick="event.stopPropagation();">
+                               <i data-lucide="edit-2" class="w-4 h-4"></i>
+                             </button>
+                             ${presenceBadge}
+                           </div>
+                           <span class="text-sm text-gray-400 block font-mono" dir="ltr">${q.phone}</span>
+                         </div>
+                       </div>
+                       <div class="text-sm text-gray-300 mt-2 bg-gray-900/80 p-2 rounded-lg inline-block border border-gray-700/50">
+                         <span class="text-amber-500/80 font-bold"><i data-lucide="scissors" class="w-3 h-3 inline"></i> الطلبات:</span> 
+                         ${q.selectedServices?.length ? q.selectedServices.join('، ') : 'بدون'} 
+                         ${q.selectedProducts?.length ? `| <span class="text-amber-500/80 font-bold"><i data-lucide="shopping-bag" class="w-3 h-3 inline"></i> المنتجات:</span> ${q.selectedProducts.join('، ')}` : ''}
+                       </div>
+                     </div>
+                     
+                     <div class="flex flex-wrap md:flex-nowrap items-center justify-center gap-1 bg-gray-900 p-1.5 rounded-xl border border-gray-700 shrink-0 relative z-10 shadow-inner" onclick="event.stopPropagation();">
+                       <button data-action="swap-with-top" data-id="${q.id}" class="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 p-2 rounded-lg transition disabled:opacity-30 flex items-center gap-1 text-xs font-bold" title="إدخال كبديل للدور الأول" ${isFirst ? 'disabled' : ''}>
+                         <i data-lucide="arrow-up-to-line" class="w-5 h-5"></i> بديل
+                       </button>
+                       <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                       <button data-action="move-up" data-idx="${idx}" class="text-gray-400 hover:text-amber-500 hover:bg-gray-800 p-2 rounded-lg transition disabled:opacity-30" title="تقديم الدور" ${isFirst ? 'disabled' : ''}>
+                         <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                       </button>
+                       <button data-action="move-down" data-idx="${idx}" class="text-gray-400 hover:text-amber-500 hover:bg-gray-800 p-2 rounded-lg transition disabled:opacity-30" title="تأخير الدور" ${isLast ? 'disabled' : ''}>
+                         <i data-lucide="arrow-down" class="w-5 h-5"></i>
+                       </button>
+                       <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                       <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition" title="إلغاء الحجز">
+                         <i data-lucide="x" class="w-5 h-5"></i>
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div id="details-${q.id}" class="hidden bg-gray-900 border-t border-gray-700 p-4 relative z-10 shadow-inner">
+                    <div id="details-content-${q.id}" class="mb-4">
+                       <div class="flex items-center gap-2 text-amber-500 font-bold text-sm"><i data-lucide="loader" class="w-4 h-4 animate-spin"></i> جاري جلب التفاصيل...</div>
+                    </div>
+                    
+                    <div class="bg-gray-950 rounded-xl p-3 border border-gray-800 flex flex-col sm:flex-row items-center gap-3 justify-between">
+                       <div class="text-white font-bold text-sm flex items-center gap-2">
+                         <div class="w-8 h-8 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center"><i data-lucide="play" class="w-4 h-4 ml-0.5"></i></div>
+                         بدء حلاقة (${customerNameDisplay}) الآن:
+                       </div>
+                       <div class="flex gap-2">
+                         <button data-action="start-specific-customer" data-id="${q.id}" data-time="30" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-900 text-white px-4 py-2 rounded-lg border border-gray-600 hover:border-amber-500 text-sm font-bold transition shadow-sm">30 د</button>
+                         <button data-action="start-specific-customer" data-id="${q.id}" data-time="45" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-900 text-white px-4 py-2 rounded-lg border border-gray-600 hover:border-amber-500 text-sm font-bold transition shadow-sm">45 د</button>
+                         <button data-action="start-specific-customer" data-id="${q.id}" data-time="60" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-900 text-white px-4 py-2 rounded-lg border border-gray-600 hover:border-amber-500 text-sm font-bold transition shadow-sm">60 د</button>
+                       </div>
+                    </div>
+                    
+                    <div class="flex gap-2 items-center mt-4">
+                      <div class="relative flex-1">
+                        <i data-lucide="message-square" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" id="msg-${q.id}" placeholder="اكتب رسالة للعميل ليرها في شاشته..." value="${q.adminMessage || ''}" class="w-full bg-gray-800 border border-gray-700 rounded-lg pr-9 pl-3 py-2 text-sm text-white focus:border-amber-500 outline-none transition">
                       </div>
+                      <button data-action="send-msg" data-id="${q.id}" class="bg-amber-500 text-gray-900 hover:bg-amber-400 px-4 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow">
+                        إرسال
+                      </button>
                     </div>
-                    <div class="text-sm text-gray-300 mt-2 bg-gray-900/50 p-2 rounded-lg inline-block">
-                      <span class="text-amber-500/80 font-bold">الطلبات:</span> 
-                      ${q.selectedServices?.length ? q.selectedServices.join('، ') : 'بدون خدمات'} 
-                      ${q.selectedProducts?.length ? `| <span class="text-amber-500/80 font-bold">المنتجات:</span> ${q.selectedProducts.join('، ')}` : ''}
-                    </div>
+                 </div>
+               </div>
+             `;
+           }).join('');
+         }
+      } else {
+         // History Tab
+         if(completedQueue.length === 0) {
+            queueHTML = `<div class="text-gray-500 text-center py-12 bg-gray-900/50 rounded-xl border border-gray-800 border-dashed flex flex-col items-center justify-center"><i data-lucide="history" class="w-10 h-10 mb-3 opacity-20"></i><p>لا يوجد سجل عملاء منتهين لهذا اليوم.</p></div>`;
+         } else {
+            queueHTML = completedQueue.map(q => {
+               let ratingBadge = q.ratingGiven ? `<span class="bg-amber-500/10 text-amber-500 px-2 py-1 rounded text-xs border border-amber-500/20 flex items-center gap-1 font-bold shadow-inner"><i data-lucide="star" class="w-3 h-3 fill-current"></i> ${q.ratingGiven}/5</span>` : '<span class="text-gray-600 text-xs px-2 py-1">لم يقيم</span>';
+               return `
+               <div class="bg-gray-800/40 p-4 rounded-xl border border-gray-700 mb-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3 hover:bg-gray-800 transition group">
+                  <div class="flex items-start gap-3">
+                     <div class="bg-gray-900 border border-gray-700 text-gray-400 font-bold w-10 h-10 rounded-lg flex items-center justify-center text-sm shadow-inner shrink-0">#${q.ticketNumber}</div>
+                     <div>
+                        <div class="font-bold text-white text-base flex items-center gap-2 mb-1">
+                          ${q.name || 'بدون اسم'}
+                          ${ratingBadge}
+                        </div>
+                        <div class="text-xs text-gray-400 font-mono" dir="ltr">${q.phone}</div>
+                        <div class="text-xs text-gray-500 mt-1.5"><i data-lucide="scissors" class="w-3 h-3 inline"></i> ${q.selectedServices?.join('، ') || 'عام'}</div>
+                     </div>
                   </div>
-                  
-                  <div class="action-buttons-wrapper flex items-center gap-1 bg-gray-900 p-1.5 rounded-lg border border-gray-700 shrink-0 relative z-10">
-                    <!-- Swap/Replace Button -->
-                    <button data-action="swap-with-top" data-id="${q.id}" class="text-blue-400 hover:text-blue-300 p-2 transition disabled:opacity-30 disabled:hover:text-blue-400" title="إدخال كبديل للدور الأول" ${isFirst ? 'disabled' : ''}>
-                      <i data-lucide="arrow-up-to-line" class="w-5 h-5"></i>
-                    </button>
-                    <div class="w-px h-6 bg-gray-700 mx-1"></div>
-                    <button data-action="move-up" data-idx="${idx}" class="text-gray-400 hover:text-amber-500 p-2 transition disabled:opacity-30 disabled:hover:text-gray-400" title="تقديم الدور خطوة" ${isFirst ? 'disabled' : ''}>
-                      <i data-lucide="arrow-up" class="w-5 h-5"></i>
-                    </button>
-                    <button data-action="move-down" data-idx="${idx}" class="text-gray-400 hover:text-amber-500 p-2 transition disabled:opacity-30 disabled:hover:text-gray-400" title="تأخير الدور خطوة" ${isLast ? 'disabled' : ''}>
-                      <i data-lucide="arrow-down" class="w-5 h-5"></i>
-                    </button>
-                    <div class="w-px h-6 bg-gray-700 mx-1"></div>
-                    <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-red-300 p-2 transition" title="حذف العميل نهائياً">
-                      <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
+                  <div class="flex sm:flex-col items-center justify-end gap-2 border-t sm:border-t-0 border-gray-700 pt-2 sm:pt-0">
+                    <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-red-500/20"><i data-lucide="trash-2" class="w-3 h-3"></i> حذف السجل</button>
                   </div>
-                </div>
-              </div>
-
-              <div id="details-${q.id}" class="hidden bg-gray-900/50 border-t border-gray-700 p-4 relative z-10">
-                 <div id="details-content-${q.id}" class="text-sm text-amber-500 mb-3 font-bold flex items-center gap-2">
-                    <i data-lucide="loader" class="w-4 h-4 animate-spin"></i> جاري جلب التفاصيل...
-                 </div>
-                 
-                 <div class="flex flex-wrap gap-2 mb-3">
-                    ${q.presenceStatus !== 'here' ? `<button data-action="admin-mark-here" data-id="${q.id}" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white px-3 py-1.5 rounded text-sm font-bold border border-green-500/30 transition flex items-center gap-1"><i data-lucide="user-check" class="w-4 h-4"></i> تأكيد تواجد العميل بالصالون</button>` : ''}
-                    ${!isFirst ? `<button data-action="swap-with-top" data-id="${q.id}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded text-sm font-bold border border-blue-500/30 transition flex items-center gap-1" title="استبدال بالعميل الأول في حالة عدم تواجده"><i data-lucide="arrow-up-to-line" class="w-4 h-4"></i> إدخال كبديل للدور الأول</button>` : ''}
-                 </div>
-
-                 <div class="bg-gray-950 rounded-xl p-3 border border-gray-800 flex flex-col sm:flex-row items-center gap-3 justify-between">
-                    <div class="text-amber-500 font-bold text-sm flex items-center gap-1">
-                      <i data-lucide="play-circle" class="w-4 h-4"></i> إدخال ${customerNameDisplay} حالاً:
-                    </div>
-                    <div class="flex gap-2">
-                      <button data-action="start-specific-customer" data-id="${q.id}" data-time="30" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-900 text-white px-3 py-1.5 rounded border border-gray-600 hover:border-amber-500 text-sm font-bold transition">30 د</button>
-                      <button data-action="start-specific-customer" data-id="${q.id}" data-time="45" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-900 text-white px-3 py-1.5 rounded border border-gray-600 hover:border-amber-500 text-sm font-bold transition">45 د</button>
-                      <button data-action="start-specific-customer" data-id="${q.id}" data-time="60" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-900 text-white px-3 py-1.5 rounded border border-gray-600 hover:border-amber-500 text-sm font-bold transition">60 د</button>
-                    </div>
-                 </div>
-                 
-                 <div class="flex gap-2 items-center mt-3">
-                   <i data-lucide="message-square" class="w-5 h-5 text-gray-500"></i>
-                   <input type="text" id="msg-${q.id}" placeholder="إرسال رسالة للموبايل..." value="${q.adminMessage || ''}" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 outline-none transition">
-                   <button data-action="send-msg" data-id="${q.id}" class="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap">
-                     إرسال
-                   </button>
-                 </div>
-              </div>
-            </div>
-          `;
-        }).join('');
+               </div>
+               `;
+            }).join('');
+         }
       }
 
-      let completedHTML = '';
-      if(completedQueue.length === 0) {
-         completedHTML = `<p class="text-gray-500 text-center py-6 text-sm">لا يوجد عملاء منتهين بعد.</p>`;
+      // Customer DB Table Rows
+      let dbRowsHTML = '';
+      const searchTerm = (document.getElementById('db-search-input')?.value || '').toLowerCase();
+      const filteredDB = state.customersDB.filter(c => 
+         (c.name && c.name.toLowerCase().includes(searchTerm)) || 
+         (c.phone && c.phone.includes(searchTerm))
+      );
+
+      if (filteredDB.length === 0) {
+         dbRowsHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 bg-gray-900/50">لا يوجد عملاء مطابقين للبحث.</td></tr>`;
       } else {
-         completedHTML = completedQueue.map(q => {
-            let ratingBadge = q.ratingGiven ? `<span class="bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded text-xs border border-amber-500/30 flex items-center gap-1"><i data-lucide="star" class="w-3 h-3 fill-current"></i> ${q.ratingGiven}</span>` : '';
+         dbRowsHTML = filteredDB.map(c => {
+            const dateStr = c.lastVisitDate ? new Date(c.lastVisitDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : '---';
             return `
-            <div class="bg-gray-800/50 p-4 rounded-xl border border-gray-700 mb-3 flex justify-between items-center group hover:bg-gray-800 transition">
-               <div>
-                  <div class="font-bold text-white text-sm flex items-center gap-2 mb-1">
-                    <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> ${q.name || 'بدون اسم'}
-                    ${ratingBadge}
-                  </div>
-                  <div class="text-xs text-gray-400 mt-1 mb-2">${q.selectedServices?.join('، ') || 'خدمة عامة'}</div>
-                  <div class="text-xs text-gray-500 bg-gray-900 px-2 py-1 rounded inline-block border border-gray-700/50">
-                     رقم الدور: <span class="text-amber-500 font-bold">${q.ticketNumber}</span>
-                  </div>
-               </div>
-               <div class="flex flex-col items-end gap-2 shrink-0">
-                 <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/30 transition flex items-center gap-1 relative z-10 shadow-sm" title="حذف السجل نهائياً" onclick="event.stopPropagation();">
-                   <i data-lucide="trash-2" class="w-3 h-3 pointer-events-none"></i> حذف العميل
-                 </button>
-               </div>
-            </div>
+               <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition group">
+                  <td class="p-3 text-white font-bold">${c.name || '---'}</td>
+                  <td class="p-3 text-gray-400 font-mono text-sm" dir="ltr">${c.phone}</td>
+                  <td class="p-3 text-center text-amber-500 font-bold">${c.visitCount || 0}</td>
+                  <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
+                  <td class="p-3">
+                     <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <a href="https://wa.me/${c.phone.replace(/[^0-9]/g, '')}" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
+                        <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال"><i data-lucide="phone" class="w-4 h-4"></i></a>
+                        <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="حذف من السجل نهائياً"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                     </div>
+                  </td>
+               </tr>
             `;
          }).join('');
       }
 
-      const generalBookingLink = window.location.origin + window.location.pathname + '?role=customer';
-
-      // --- Generate Filter UI ---
-      const currentMonthStr = state.adminSelectedMonth || today.slice(0, 7);
-      const monthQueue = state.queue.filter(q => q.bookingDate && q.bookingDate.startsWith(currentMonthStr));
-      const dailyCounts = {};
-      monthQueue.forEach(q => { dailyCounts[q.bookingDate] = (dailyCounts[q.bookingDate] || 0) + 1; });
-      if (today.startsWith(currentMonthStr) && !dailyCounts[today]) dailyCounts[today] = 0;
-      if (!dailyCounts[state.adminSelectedDate] && state.adminSelectedDate.startsWith(currentMonthStr)) dailyCounts[state.adminSelectedDate] = 0;
-      
-      const sortedDays = Object.keys(dailyCounts).sort();
-      const daysFilterHTML = sortedDays.map(day => {
-         const count = dailyCounts[day];
-         const isSel = day === state.adminSelectedDate;
-         const d = new Date(day);
-         const dayNum = d.getDate();
-         const dayName = d.toLocaleDateString('ar-EG', { weekday: 'short' });
-         return `<button data-action="admin-filter-date" data-val="${day}" class="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition flex flex-col items-center min-w-[70px] border-2 ${isSel ? 'bg-amber-500 text-gray-900 border-amber-500 shadow-md' : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-amber-500/50'}">
-            <span class="text-xs mb-1 ${isSel ? 'text-gray-800' : 'text-gray-500'}">${dayName}</span>
-            <span class="text-xl leading-none mb-1">${dayNum}</span>
-            <span class="text-[10px] px-2 py-0.5 mt-1 rounded-full ${isSel ? 'bg-gray-900 text-amber-500' : 'bg-gray-700 text-amber-500'} font-black">${count} عميل</span>
-         </button>`;
-      }).join('');
-      // --------------------------
-
       container.innerHTML = `
-        <div class="bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>
-            <h2 class="text-3xl font-black text-white mb-2 tracking-wide">الرئيسية <span class="text-amber-500">(Tito)</span></h2>
-            <p class="text-gray-400">إدارة الصالون، الطابور، والعملاء في شاشة واحدة.</p>
-          </div>
-          <button data-action="toggle-shop" class="px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 transition-all shadow-lg ${isOpen ? 'bg-red-500/10 text-red-500 border border-red-500/50 hover:bg-red-500/20' : 'bg-green-500/10 text-green-500 border border-green-500/50 hover:bg-green-500/20'}">
-            <i data-lucide="power" class="w-5 h-5"></i>
-            ${isOpen ? 'إغلاق الصالون' : 'فتح الصالون وبدء العمل'}
-          </button>
+        <!-- Top Bar Control Panel -->
+        <div class="flex flex-col md:flex-row gap-4 mb-6 bg-gray-900 p-5 rounded-3xl border border-gray-800 shadow-xl justify-between items-center z-30 relative">
+           <h2 class="text-2xl font-black text-white tracking-wider flex items-center gap-2">
+              <i data-lucide="scissors" class="w-6 h-6 text-amber-500"></i> إدارة تيتو
+           </h2>
+           <div class="flex flex-wrap justify-center gap-3 w-full md:w-auto">
+             <button data-action="toggle-shop" class="flex-1 md:flex-none px-6 py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-2 transition-all ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border">
+               <i data-lucide="power" class="w-5 h-5"></i>
+               ${isOpen ? 'إغلاق الصالون' : 'فتح الصالون'}
+             </button>
+             <button data-action="toggle-admin-add-modal" class="flex-1 md:flex-none bg-amber-500 hover:bg-amber-400 text-gray-900 px-6 py-3 font-bold rounded-xl shadow-md flex items-center justify-center gap-2 transition-all">
+                <i data-lucide="user-plus" class="w-5 h-5"></i> إضافة عميل
+             </button>
+             <button data-action="toggle-admin-settings" class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 font-bold rounded-xl border border-gray-700 shadow-md flex items-center justify-center gap-2 transition-all">
+                <i data-lucide="settings" class="w-5 h-5 text-gray-400"></i> إعدادات
+             </button>
+           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 items-start">
-          
-          <!-- 1. Current Customer (Top Mobile, Top-Left Desktop) -->
-          <div class="order-1 lg:col-span-1 w-full">
-            <div class="bg-gray-900 rounded-2xl p-6 border border-amber-500/30 relative overflow-hidden shadow-lg">
-              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-amber-700"></div>
-              <h3 class="text-xl font-bold text-amber-500 mb-4 flex items-center gap-2">
-                <i data-lucide="scissors" class="w-6 h-6"></i> العميل الحالي على الكرسي
-              </h3>
-              <div class="text-center bg-gray-950 p-6 rounded-xl border border-gray-800 shadow-inner">
-                <p class="text-gray-400 mb-2 font-bold">رقم الدور:</p>
-                <div class="text-7xl font-black text-white mb-4 drop-shadow-lg">${state.shopState.currentTicket || '--'}</div>
-                <div class="flex items-center justify-center gap-2 text-amber-500 font-bold bg-amber-500/10 py-2 rounded-lg border border-amber-500/20">
-                  <i data-lucide="clock" class="w-5 h-5"></i> <span class="timer-display tracking-wider">${formatTime(state.timeLeft)}</span>
-                </div>
-                
-                <div class="mt-4 flex flex-col gap-2">
-                   ${state.shopState.timerEndTime > Date.now() || state.shopState.currentTicket > 0 ? `
-                     <button data-action="end-current" class="text-sm bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded border border-gray-700 transition font-bold">إنهاء وإخلاء الكرسي</button>
-                     <button data-action="end-and-next" class="text-sm bg-amber-500 text-gray-900 hover:bg-amber-400 px-4 py-2 rounded border border-amber-500 transition font-bold shadow flex items-center justify-center gap-1"><i data-lucide="check-check" class="w-4 h-4"></i> إنهاء وبدء الدور القادم</button>
-                   ` : ''}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. Queue & History (Middle Mobile, Right Desktop Spanning down) -->
-          <div class="order-2 lg:col-span-2 lg:row-span-4 w-full flex flex-col max-h-[85vh]">
-            <div class="bg-gray-900 rounded-t-2xl p-4 border border-gray-800 border-b-0 shrink-0 flex flex-col gap-4">
-               <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                   <!-- TABS -->
-                   <div class="flex bg-gray-950 p-1 rounded-xl border border-gray-800 w-full sm:w-auto">
-                       <button data-action="admin-switch-tab" data-val="waiting" class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition ${state.adminViewTab === 'waiting' ? 'bg-amber-500 text-gray-900 shadow' : 'text-gray-400 hover:text-white'}">
-                           الانتظار (${waitingQueue.length})
-                       </button>
-                       <button data-action="admin-switch-tab" data-val="completed" class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition ${state.adminViewTab === 'completed' ? 'bg-amber-500 text-gray-900 shadow' : 'text-gray-400 hover:text-white'}">
-                           السجل (${completedQueue.length})
-                       </button>
-                   </div>
-                   <div class="flex gap-2 w-full sm:w-auto">
-                     <button onclick="copyToClipboard('${generalBookingLink}')" class="w-full sm:w-auto justify-center text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded flex items-center gap-1 text-sm border border-amber-500/20 hover:bg-amber-500 hover:text-gray-900 transition font-bold">
-                       <i data-lucide="link" class="w-4 h-4"></i> نسخ الرابط
-                     </button>
-                   </div>
-               </div>
-               
-               <!-- Filters -->
-               <div class="bg-gray-950 p-3 rounded-xl border border-gray-800 flex items-center gap-3 overflow-hidden">
-                  <div class="shrink-0 border-l border-gray-800 pl-3">
-                     <label class="block text-[10px] text-gray-500 mb-1">تصفية بالشهر</label>
-                     <input type="month" id="admin-month-filter" value="${state.adminSelectedMonth}" class="bg-gray-800 border border-gray-700 rounded-lg p-1.5 text-xs text-white outline-none focus:border-amber-500 cursor-pointer">
-                  </div>
-                  <div class="flex-1 overflow-x-auto custom-scrollbar flex gap-2 pb-2 pt-1 px-1">
-                     ${daysFilterHTML}
-                  </div>
-               </div>
-            </div>
-            
-            <div class="bg-gray-950 p-4 border border-gray-800 overflow-y-auto pr-2 custom-scrollbar flex-1 shadow-inner border-b-0">
-              ${state.adminViewTab === 'waiting' ? queueHTML : completedHTML}
-            </div>
-
-            <div class="bg-gray-900 rounded-b-2xl p-4 border border-gray-800 mt-0 text-gray-500 text-sm flex items-center justify-between">
-               <span>* يتم عرض ${state.adminViewTab === 'waiting' ? 'الانتظار' : 'السجل'} بناءً على اليوم المحدد.</span>
-               ${state.adminViewTab === 'completed' ? '<span class="text-xs bg-gray-800 px-2 py-1 rounded">يتم الاحتفاظ بالسجل 30 يوماً</span>' : ''}
-            </div>
-          </div>
-
-          <!-- 3. Add Direct Customer (Bottom Mobile, Left Desktop) -->
-          <div class="order-3 lg:col-span-1 w-full">
-            <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                  <i data-lucide="user-plus" class="w-5 h-5 text-amber-500"></i> إضافة عميل بالصالون
-                </h3>
-                <button data-action="toggle-services-management" class="text-gray-400 hover:text-amber-500 transition bg-gray-800 p-1.5 rounded-lg border border-gray-700 hover:border-amber-500/50" title="إدارة الخدمات والمنتجات">
-                  <i data-lucide="settings" class="w-5 h-5"></i>
-                </button>
-              </div>
-
-              <!-- Services Management Panel (Toggled) -->
-              <div class="${state.showServicesManagement ? 'block' : 'hidden'} mb-6 p-4 bg-gray-800/50 rounded-xl border border-gray-700 animate-fade-in-down">
-                 <h4 class="text-amber-500 font-bold mb-3 text-sm flex items-center gap-2"><i data-lucide="settings-2" class="w-4 h-4"></i> إعدادات القوائم</h4>
-                 <div class="space-y-4">
-                    <!-- Services -->
-                    <div>
-                       <p class="text-xs text-gray-400 mb-2 font-bold">إدارة الخدمات:</p>
-                       <div class="flex gap-2 mb-2">
-                          <input type="text" id="new-service-input" class="flex-1 bg-gray-900 border border-gray-700 rounded p-2 text-xs text-white focus:border-amber-500 outline-none" placeholder="اسم الخدمة...">
-                          <button data-action="add-new-service" class="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 px-3 py-1 rounded text-xs font-bold transition">إضافة</button>
-                       </div>
-                       <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
-                          ${(state.shopState.services || []).map(s => `
-                             <span class="bg-gray-900 text-gray-300 px-2 py-1 rounded flex items-center gap-1 text-xs border border-gray-700 group">
-                                ${s} 
-                                <button data-action="remove-service" data-val="${s}" class="text-red-500/50 hover:text-red-500 transition"><i data-lucide="x" class="w-3 h-3 pointer-events-none"></i></button>
-                             </span>
-                          `).join('')}
-                       </div>
+        <!-- Hidden Panels: Quick Add -->
+        <div id="quick-add-area" class="hidden mb-6 bg-gray-900 rounded-3xl p-6 md:p-8 border border-amber-500/30 shadow-2xl animate-fade-in-down relative z-20">
+           <button data-action="toggle-admin-add-modal" class="absolute top-4 left-4 text-gray-500 hover:text-white bg-gray-800 p-2 rounded-xl transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+           <h3 class="text-xl font-black text-white mb-6 flex items-center gap-2"><i data-lucide="user-plus" class="w-6 h-6 text-amber-500"></i> إضافة عميل مباشر بالصالون</h3>
+           
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                 <div>
+                   <label class="block text-gray-400 text-xs font-bold mb-1.5">اسم العميل (مطلوب)</label>
+                   <input type="text" id="admin-add-name" value="${state.adminAdd.name}" placeholder="الاسم..." class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition">
+                 </div>
+                 <div>
+                   <label class="block text-gray-400 text-xs font-bold mb-1.5">رقم الهاتف (اختياري)</label>
+                   <input type="tel" id="admin-add-phone" value="${state.adminAdd.phone}" placeholder="010..." class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition" dir="ltr">
+                 </div>
+                 <div class="flex gap-4">
+                    <div class="flex-1">
+                       <label class="block text-gray-400 text-xs font-bold mb-1.5">تاريخ الحجز</label>
+                       <input type="date" id="admin-add-date" min="${today}" value="${state.adminAdd.date || today}" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none cursor-pointer">
                     </div>
-                    <!-- Products -->
-                    <div class="border-t border-gray-700 pt-3">
-                       <p class="text-xs text-gray-400 mb-2 font-bold">إدارة المنتجات:</p>
-                       <div class="flex gap-2 mb-2">
-                          <input type="text" id="new-product-input" class="flex-1 bg-gray-900 border border-gray-700 rounded p-2 text-xs text-white focus:border-amber-500 outline-none" placeholder="اسم المنتج...">
-                          <button data-action="add-new-product" class="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 px-3 py-1 rounded text-xs font-bold transition">إضافة</button>
-                       </div>
-                       <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
-                          ${(state.shopState.products || []).map(p => `
-                             <span class="bg-gray-900 text-gray-300 px-2 py-1 rounded flex items-center gap-1 text-xs border border-gray-700 group">
-                                ${p} 
-                                <button data-action="remove-product" data-val="${p}" class="text-red-500/50 hover:text-red-500 transition"><i data-lucide="x" class="w-3 h-3 pointer-events-none"></i></button>
-                             </span>
-                          `).join('')}
-                       </div>
+                    <div class="flex-1">
+                       <label class="block text-gray-400 text-xs font-bold mb-1.5">وقت الحضور</label>
+                       <select id="admin-add-time" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none cursor-pointer">
+                          <option value="">اختر الوقت...</option>
+                       </select>
                     </div>
                  </div>
               </div>
 
-              <div class="space-y-3">
-                <input type="text" id="admin-add-name" value="${state.adminAdd.name}" placeholder="اسم العميل..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-amber-500 outline-none text-sm">
-                <input type="tel" id="admin-add-phone" value="${state.adminAdd.phone}" placeholder="رقم الهاتف (اختياري)..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-amber-500 outline-none text-sm" dir="ltr">
-                
-                <div class="flex gap-2">
-                  <input type="date" id="admin-add-date" min="${today}" value="${state.adminAdd.date || today}" class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-white outline-none text-xs">
-                  <select id="admin-add-time" class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-white outline-none text-xs">
-                     <option value="">الوقت...</option>
-                  </select>
-                </div>
+              <!-- Services & Products selection inside add modal -->
+              <div class="bg-gray-800/40 p-5 rounded-2xl border border-gray-700">
+                 <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-white font-bold flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-amber-500"></i> الخدمات والمنتجات</h4>
+                    <button data-action="toggle-services-management" class="text-gray-400 hover:text-amber-500 transition bg-gray-900 p-2 rounded-xl border border-gray-700 hover:border-amber-500/50" title="إدارة القوائم">
+                      <i data-lucide="settings-2" class="w-4 h-4"></i>
+                    </button>
+                 </div>
 
-                <div class="mt-2">
-                   <p class="text-xs text-gray-400 font-bold mb-2">الخدمات:</p>
-                   <div class="flex flex-wrap gap-1.5">
-                     ${(state.shopState.services || []).map(s => {
-                        const sel = state.adminAdd.services.includes(s);
-                        return `<button data-action="admin-toggle-service" data-val="${s}" class="px-2 py-1 rounded-md text-xs font-bold transition-colors ${sel ? 'bg-amber-500 text-gray-900' : 'bg-gray-700 text-gray-300'}">${s}</button>`;
-                     }).join('')}
-                   </div>
-                </div>
+                 <!-- Management Panel (Toggled) -->
+                 <div id="services-management-panel" class="${state.showServicesManagement ? 'block' : 'hidden'} mb-4 p-4 bg-gray-900 rounded-xl border border-gray-700 animate-fade-in-down">
+                    <div class="mb-4">
+                       <p class="text-xs text-gray-400 mb-2 font-bold">إضافة خدمة جديدة:</p>
+                       <div class="flex gap-2 mb-2">
+                          <input type="text" id="new-service-input" class="flex-1 bg-gray-950 border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-amber-500 outline-none" placeholder="اسم الخدمة...">
+                          <button data-action="add-new-service" class="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 px-3 py-1 rounded-lg text-xs font-bold transition">إضافة</button>
+                       </div>
+                       <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
+                          ${(state.shopState.services || []).map(s => `<span class="bg-gray-800 text-gray-300 px-2 py-1 rounded flex items-center gap-1 text-xs border border-gray-700 group">${s} <button data-action="remove-service" data-val="${s}" class="text-red-500/50 hover:text-red-500 transition"><i data-lucide="x" class="w-3 h-3 pointer-events-none"></i></button></span>`).join('')}
+                       </div>
+                    </div>
+                    <div class="border-t border-gray-800 pt-3">
+                       <p class="text-xs text-gray-400 mb-2 font-bold">إضافة منتج جديد:</p>
+                       <div class="flex gap-2 mb-2">
+                          <input type="text" id="new-product-input" class="flex-1 bg-gray-950 border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-amber-500 outline-none" placeholder="اسم المنتج...">
+                          <button data-action="add-new-product" class="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 px-3 py-1 rounded-lg text-xs font-bold transition">إضافة</button>
+                       </div>
+                       <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
+                          ${(state.shopState.products || []).map(p => `<span class="bg-gray-800 text-gray-300 px-2 py-1 rounded flex items-center gap-1 text-xs border border-gray-700 group">${p} <button data-action="remove-product" data-val="${p}" class="text-red-500/50 hover:text-red-500 transition"><i data-lucide="x" class="w-3 h-3 pointer-events-none"></i></button></span>`).join('')}
+                       </div>
+                    </div>
+                 </div>
 
-                <div class="mt-2 mb-2">
-                   <p class="text-xs text-gray-400 font-bold mb-2">المنتجات:</p>
-                   <div class="flex flex-wrap gap-1.5">
-                     ${(state.shopState.products || []).map(p => {
-                        const sel = state.adminAdd.products.includes(p);
-                        return `<button data-action="admin-toggle-product" data-val="${p}" class="px-2 py-1 rounded-md text-xs font-bold transition-colors ${sel ? 'bg-amber-500 text-gray-900' : 'bg-gray-700 text-gray-300'}">${p}</button>`;
-                     }).join('')}
-                   </div>
-                </div>
+                 <div class="space-y-4">
+                    <div>
+                       <p class="text-xs text-gray-400 font-bold mb-2">اختر الخدمات المطلوبة:</p>
+                       <div class="flex flex-wrap gap-2">
+                          ${(state.shopState.services || []).map(s => {
+                             const sel = state.adminAdd.services.includes(s);
+                             return `<button data-action="admin-toggle-service" data-val="${s}" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${sel ? 'bg-amber-500 text-gray-900 border-amber-500 shadow-md' : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500'}">${s}</button>`;
+                          }).join('')}
+                       </div>
+                    </div>
+                    <div>
+                       <p class="text-xs text-gray-400 font-bold mb-2">اختر المنتجات (اختياري):</p>
+                       <div class="flex flex-wrap gap-2">
+                          ${(state.shopState.products || []).map(p => {
+                             const sel = state.adminAdd.products.includes(p);
+                             return `<button data-action="admin-toggle-product" data-val="${p}" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${sel ? 'bg-amber-500 text-gray-900 border-amber-500 shadow-md' : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500'}">${p}</button>`;
+                          }).join('')}
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+           
+           <button data-action="admin-add-customer" class="w-full mt-6 bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2 text-lg">
+              <i data-lucide="check-circle" class="w-6 h-6"></i> تأكيد إضافة العميل وإصدار الرقم
+           </button>
+        </div>
 
-                <button data-action="admin-add-customer" class="w-full bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-gray-900 border border-amber-500/50 font-bold py-2 rounded-lg transition mt-2 flex items-center justify-center gap-2">
-                  <i data-lucide="check-circle" class="w-4 h-4"></i> تسجيل العميل
-                </button>
+        <!-- Hidden Panels: Settings -->
+        <div id="settings-area" class="hidden mb-6 p-6 md:p-8 bg-gray-900 rounded-3xl border border-gray-800 shadow-2xl animate-fade-in-down relative z-20">
+           <button data-action="toggle-admin-settings" class="absolute top-4 left-4 text-gray-500 hover:text-white bg-gray-800 p-2 rounded-xl transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+           <h3 class="text-xl font-black text-white mb-6 flex items-center gap-2 border-b border-gray-800 pb-4"><i data-lucide="settings" class="w-6 h-6 text-gray-400"></i> إعدادات الصالون الإضافية</h3>
+           
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <!-- Gallery -->
+              <div class="space-y-4">
+                 <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> صور إعلانات الصالون للعملاء</h4>
+                 <div class="flex flex-col gap-3">
+                    <input type="file" id="input-new-gallery-file" accept="image/*" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-800 file:text-white hover:file:bg-gray-700 cursor-pointer transition" />
+                    <button data-action="upload-gallery" class="w-full bg-gray-800 text-white hover:bg-amber-500 hover:text-gray-900 px-4 py-3 rounded-xl font-bold text-sm transition flex justify-center items-center gap-2 border border-gray-700 hover:border-amber-500"><i data-lucide="upload-cloud" class="w-5 h-5"></i> رفع الصورة للعملاء</button>
+                    <div id="upload-progress" class="hidden text-amber-500 text-xs font-bold animate-pulse text-center bg-amber-500/10 p-2 rounded-lg">جاري معالجة ورفع الصورة...</div>
+                 </div>
+                 <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto custom-scrollbar pr-1 mt-2">
+                    ${(state.shopState.gallery || []).map(url => `
+                      <div class="relative group rounded-lg overflow-hidden border border-gray-700 aspect-square">
+                        <img src="${url}" class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button data-action="remove-gallery" data-val="${url}" class="bg-red-500 text-white p-2 rounded-full shadow-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                      </div>
+                    `).join('')}
+                 </div>
+              </div>
+              
+              <!-- Working Hours -->
+              <div class="space-y-4 md:border-r border-gray-800 md:pr-8">
+                 <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> أوقات العمل الرسمية</h4>
+                 <p class="text-gray-500 text-xs leading-relaxed mb-4">هذه الأوقات ستحدد متى يمكن للعميل حجز موعد جديد من المنزل.</p>
+                 <div class="flex gap-4 mb-4">
+                    <div class="flex-1 bg-gray-950 border border-gray-700 rounded-xl p-3 flex flex-col gap-1">
+                       <span class="text-xs text-gray-500 font-bold">بداية العمل (من)</span>
+                       <input type="time" id="shop-start-time" value="${state.shopState.workingHours?.start || '10:00'}" class="bg-transparent w-full text-white outline-none font-bold" />
+                    </div>
+                    <div class="flex-1 bg-gray-950 border border-gray-700 rounded-xl p-3 flex flex-col gap-1">
+                       <span class="text-xs text-gray-500 font-bold">نهاية العمل (إلى)</span>
+                       <input type="time" id="shop-end-time" value="${state.shopState.workingHours?.end || '23:00'}" class="bg-transparent w-full text-white outline-none font-bold" />
+                    </div>
+                 </div>
+                 <button data-action="save-hours" class="w-full bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 border border-amber-500/50 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"><i data-lucide="save" class="w-5 h-5"></i> حفظ أوقات العمل</button>
+              </div>
+           </div>
+        </div>
+
+        <div class="space-y-6">
+          
+          <!-- Chair Panel -->
+          <div class="bg-gray-900 rounded-3xl p-6 border border-amber-500/30 relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-500 to-amber-700"></div>
+            <h3 class="text-xl font-bold text-amber-500 mb-6 flex items-center gap-2">
+              <i data-lucide="scissors" class="w-6 h-6"></i> العميل الحالي على الكرسي
+            </h3>
+            
+            <div class="text-center bg-gray-950 p-6 rounded-2xl border border-gray-800 shadow-inner mb-4 relative z-10">
+              <p class="text-gray-500 mb-2 font-bold text-sm">رقم الدور بالداخل</p>
+              <div class="text-7xl font-black text-white mb-2 drop-shadow-lg">${state.shopState.currentTicket || '--'}</div>
+              <div class="text-amber-500 font-bold text-lg mb-6">${activeTicket ? activeTicket.name : '---'}</div>
+              
+              <div class="flex justify-center items-center gap-3 text-amber-500 font-bold bg-gray-900 py-3 rounded-xl border border-amber-500/20 shadow-inner mb-6">
+                <i data-lucide="clock" class="w-5 h-5"></i> 
+                <span class="timer-display tracking-widest text-xl font-mono">${formatTime(state.timeLeft)}</span>
+              </div>
+              
+              <div class="flex flex-col gap-3">
+                 ${state.shopState.timerEndTime > Date.now() || state.shopState.currentTicket > 0 ? `
+                   <button data-action="end-current" class="text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white py-3 rounded-xl border border-gray-700 transition font-bold">إنهاء الدور وإخلاء الكرسي فقط</button>
+                   <button data-action="end-and-next" class="text-base bg-amber-500 text-gray-900 hover:bg-amber-400 py-4 rounded-xl transition font-black shadow-lg flex items-center justify-center gap-2"><i data-lucide="check-check" class="w-5 h-5"></i> إنهاء وبدء الدور التالي فوراً</button>
+                 ` : '<div class="text-gray-600 text-sm py-2">الكرسي فارغ حالياً</div>'}
               </div>
             </div>
+
+            <!-- Next in line quick preview -->
+            ${nextInLine ? `
+               <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700 mt-4">
+                  <p class="text-xs text-gray-400 font-bold mb-3 flex items-center gap-2"><i data-lucide="arrow-left-circle" class="w-4 h-4 text-amber-500"></i> الدور التالي (المنتظر):</p>
+                  <div class="flex justify-between items-center">
+                     <div class="flex items-center gap-3">
+                        <span class="bg-gray-900 text-white font-bold w-10 h-10 rounded-lg flex items-center justify-center text-sm border border-gray-700">${nextInLine.ticketNumber}</span>
+                        <div>
+                           <div class="text-white font-bold text-sm">${nextInLine.name || 'بدون اسم'}</div>
+                           <div class="text-gray-500 text-xs font-mono mt-0.5" dir="ltr">${nextInLine.phone}</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            ` : ''}
           </div>
 
-          <!-- 4. Gallery (Bottom Mobile, Left Desktop) -->
-          <div class="order-4 lg:col-span-1 w-full">
-            <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800 flex flex-col">
-               <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 shrink-0">
-                 <i data-lucide="image" class="w-5 h-5 text-amber-500"></i> معرض صور الإعلانات
-               </h3>
-               <div class="space-y-4">
-                 <div class="flex flex-col gap-2 mb-2">
-            <div class="bg-gray-950 p-4 border border-gray-800 overflow-y-auto pr-2 custom-scrollbar flex-1 rounded-b-2xl shadow-inner">
+          <!-- Queue / History Panel -->
+          <div class="flex flex-col max-h-[100vh]">
+            
+            <!-- Filters & Tabs Header -->
+            <div class="bg-gray-900 rounded-t-3xl p-5 border border-gray-800 border-b-0 shrink-0 z-20 shadow-lg">
+               
+               <!-- Top bar: Tabs & Month Picker -->
+               <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-5 border-b border-gray-800 pb-5">
+                  <div class="flex bg-gray-950 p-1.5 rounded-xl border border-gray-800 w-full sm:w-auto shadow-inner">
+                     <button data-action="admin-switch-tab" data-tab="waiting" class="flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${state.adminViewTab === 'waiting' ? 'bg-amber-500 text-gray-900 shadow' : 'text-gray-400 hover:text-white'}">الانتظار (${waitingQueue.length})</button>
+                     <button data-action="admin-switch-tab" data-tab="completed" class="flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${state.adminViewTab === 'completed' ? 'bg-gray-700 text-white shadow' : 'text-gray-400 hover:text-white'}">السجل (${completedQueue.length})</button>
+                  </div>
+                  <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700">
+                     <i data-lucide="calendar-days" class="w-5 h-5 text-amber-500"></i>
+                     <input type="month" id="admin-month-filter" value="${state.adminSelectedMonth}" class="bg-transparent text-white outline-none text-sm font-bold cursor-pointer" />
+                  </div>
+               </div>
+
+               <!-- Days Horizontal Scroll Filter -->
+               <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-2 pt-1" id="days-filter-container">
+                  ${daysFilterHTML || '<div class="text-gray-500 text-sm py-2 px-2">لا توجد حجوزات في هذا الشهر.</div>'}
+               </div>
+
+            </div>
+            
+            <!-- Queue Content Area -->
+            <div class="bg-gray-950 p-5 border border-gray-800 overflow-y-auto custom-scrollbar flex-1 rounded-b-3xl shadow-inner relative z-10">
               ${queueHTML}
             </div>
 
           </div>
+          
+          <!-- Customers DB Section -->
+          <div class="bg-gray-900 rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
+             <div class="p-6 border-b border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-900/80">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                   <i data-lucide="database" class="w-6 h-6 text-amber-500"></i> قاعدة بيانات العملاء 
+                   <span class="bg-gray-800 text-xs px-2 py-1 rounded-lg border border-gray-700 text-gray-400 ml-2">${state.customersDB.length} عميل</span>
+                </h3>
+                <div class="relative w-full sm:w-72">
+                   <i data-lucide="search" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                   <input type="text" id="db-search-input" placeholder="بحث بالاسم أو الرقم..." class="w-full bg-gray-950 border border-gray-700 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-amber-500 outline-none transition">
+                </div>
+             </div>
+             <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse min-w-[600px]">
+                   <thead>
+                      <tr class="bg-gray-950 text-gray-500 text-xs font-bold border-b border-gray-800">
+                         <th class="p-4 w-1/4">الاسم</th>
+                         <th class="p-4 w-1/4">رقم الهاتف</th>
+                         <th class="p-4 w-1/6 text-center">إجمالي الزيارات</th>
+                         <th class="p-4 w-1/4">تاريخ آخر زيارة</th>
+                         <th class="p-4 w-auto">إجراءات</th>
+                      </tr>
+                   </thead>
+                   <tbody id="db-table-body">
+                      ${dbRowsHTML}
+                   </tbody>
+                </table>
+             </div>
+          </div>
+          
         </div>
-
-        <!-- قاعدة بيانات العملاء -->
-        <div class="mt-8 bg-gray-900 rounded-2xl p-6 border border-gray-800 shadow-xl">
-           <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-gray-800 pb-4 gap-4">
-               <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                 <i data-lucide="database" class="w-6 h-6 text-amber-500"></i> قاعدة بيانات العملاء (${state.customers.length})
-               </h3>
-               <div class="relative w-full md:w-80">
-                  <i data-lucide="search" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-                  <input type="text" id="customer-search" placeholder="بحث بالاسم أو رقم الهاتف..." class="w-full bg-gray-950 border border-gray-700 rounded-xl py-2.5 pr-10 pl-4 text-sm text-white focus:border-amber-500 outline-none transition">
-               </div>
-           </div>
-           
-           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2" id="customers-list-container">
-              ${state.customers.length === 0 ? '<p class="text-gray-500 col-span-full text-center py-8">لا يوجد عملاء مسجلين بعد.</p>' : ''}
-              ${state.customers.map(c => `
-                 <div class="customer-card-item bg-gray-800 p-4 rounded-xl border border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-amber-500/50 transition group">
-                    <div>
-                       <div class="font-bold text-white text-lg flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-amber-500"></i> ${c.name || 'بدون اسم'}</div>
-                       <div class="text-sm text-gray-400 mt-1 font-bold" dir="ltr">${c.phone}</div>
-                       <div class="text-xs text-gray-500 mt-2 flex flex-wrap gap-2">
-                         <span class="bg-gray-900 px-2 py-1 rounded">الزيارات: ${c.visitCount || 0}</span>
-                         <span class="bg-gray-900 px-2 py-1 rounded">آخر زيارة: ${c.lastVisitDate ? new Date(c.lastVisitDate).toLocaleDateString('ar-EG') : 'غير محدد'}</span>
-                       </div>
-                    </div>
-                    <div class="flex gap-2 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
-                       <a href="https://wa.me/2${c.phone}" target="_blank" class="flex-1 sm:flex-none bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white px-3 py-2 rounded-lg text-sm font-bold border border-green-500/30 transition flex items-center justify-center gap-1 shadow-sm" title="مراسلة واتساب">
-                          <i data-lucide="message-circle" class="w-4 h-4"></i>
-                       </a>
-                       <a href="tel:${c.phone}" class="flex-1 sm:flex-none bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-lg text-sm font-bold border border-blue-500/30 transition flex items-center justify-center gap-1 shadow-sm" title="اتصال هاتفي">
-                          <i data-lucide="phone" class="w-4 h-4"></i>
-                       </a>
-                       <button data-action="delete-customer-db" data-phone="${c.phone}" class="flex-1 sm:flex-none bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-2 rounded-lg text-sm font-bold border border-red-500/30 transition flex items-center justify-center gap-1 shadow-sm" title="حذف العميل من قاعدة البيانات">
-                          <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
-                       </button>
-                    </div>
-                 </div>
-              `).join('')}
-           </div>
-        </div>
-
       `;
       lucide.createIcons();
-      updateBookingTimes(); // Update time options for admin add
+      updateBookingTimes();
     };
 
     const renderCustomerBooking = () => {
@@ -1163,8 +979,8 @@
       const today = new Date().toISOString().split('T')[0];
       const isReturning = state.customerRecord && state.customerRecord.visitCount > 0;
       
-      // Customer only sees waiting count for TODAY
-      const waitingCount = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === today).length;
+      // احسب فقط عدد المنتظرين "اليوم" للعميل لكي لا يخاف من العدد الكلي
+      const waitingCountToday = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === today).length;
       
       const showForm = !isReturning || state.showNewBookingForm;
 
@@ -1193,9 +1009,9 @@
             <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex-1 w-full md:max-w-xs text-center">
                <p class="text-amber-500 font-bold text-sm flex items-center justify-center gap-2 mb-1">
                   <i data-lucide="users" class="w-4 h-4"></i>
-                  العملاء في الانتظار اليوم: <span class="text-xl font-black bg-amber-500 text-gray-900 px-2 rounded ml-1">${waitingCount}</span>
+                  منتظرين اليوم: <span class="text-xl font-black bg-amber-500 text-gray-900 px-2 rounded ml-1">${waitingCountToday}</span>
                </p>
-               <p class="text-gray-400 text-xs">يرجى اختيار الوقت المناسب لحضورك لتفادي الانتظار الطويل.</p>
+               <p class="text-gray-400 text-xs">احجز موعدك الآن حتى لو كان الصالون مغلقاً.</p>
             </div>
          </div>
       `;
@@ -1265,7 +1081,7 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-gray-400 text-sm mb-2 font-bold">تاريخ الحجز</label>
-                  <input type="date" id="input-booking-date" value="${state.tempBookingDate || today}" min="${today}" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition" required>
+                  <input type="date" id="input-booking-date" value="${state.tempBookingDate || today}" min="${today}" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition cursor-pointer" required>
                 </div>
                 <div>
                   <label class="block text-gray-400 text-sm mb-2 font-bold">وقت الحضور المتاح</label>
@@ -1381,8 +1197,9 @@
       }
       
       // 3) WAITING STATUS
-      const myBookingDate = state.myTicket.bookingDate;
-      const waitingBeforeMe = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === myBookingDate && q.ticketNumber < state.myTicket.ticketNumber);
+      // Compare ONLY with waiting customers on the SAME DATE
+      const sameDayWaiting = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate);
+      const waitingBeforeMe = sameDayWaiting.filter(q => q.ticketNumber < state.myTicket.ticketNumber);
       const myPosition = waitingBeforeMe.length + 1;
       
       const isUrgentTimer = state.timeLeft <= 300000 && state.timeLeft > 0;
@@ -1393,7 +1210,7 @@
 
       let posHTML = '';
       if (myPosition === 1) posHTML = `<span class="text-green-400 bg-green-400/10 px-4 py-1.5 rounded-full border border-green-400/30 font-bold shadow-sm">أنت الدور القادم! استعد يا ${state.customerName}</span>`;
-      else if (myPosition > 1) posHTML = `<span class="text-lg">يوجد قبلك <span class="text-amber-500 font-black text-2xl mx-1">${myPosition - 1}</span> أشخاص</span>`;
+      else if (myPosition > 1) posHTML = `<span class="text-lg">يوجد قبلك <span class="text-amber-500 font-black text-2xl mx-1">${myPosition - 1}</span> أشخاص لليوم</span>`;
       else posHTML = `<span class="text-gray-500">جاري الحساب...</span>`;
 
       let warningCardHTML = '';
@@ -1454,7 +1271,10 @@
       }
 
       let bookingInfo = (state.myTicket.bookingDate && state.myTicket.bookingTime) ? 
-          `<div class="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-4 py-2 rounded-xl mb-6 font-bold flex items-center justify-center gap-2"><i data-lucide="calendar-clock" class="w-5 h-5"></i> موعدك: ${state.myTicket.bookingDate} الساعة ${state.myTicket.bookingTime}</div>` : '';
+          `<div class="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-4 py-2 rounded-xl mb-6 font-bold flex flex-col sm:flex-row items-center justify-between gap-2">
+             <span class="flex items-center gap-2"><i data-lucide="calendar-clock" class="w-5 h-5"></i> موعدك: ${state.myTicket.bookingDate} الساعة ${state.myTicket.bookingTime}</span>
+             <button data-action="customer-cancel-booking" class="bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg text-sm transition font-bold border border-red-500/30 flex items-center gap-1"><i data-lucide="x-circle" class="w-4 h-4"></i> إلغاء الحجز</button>
+           </div>` : '';
 
       htmlContent += `
         ${shareLinkHTML}
@@ -1482,19 +1302,12 @@
           
           <div class="text-center bg-gray-800/50 p-4 rounded-xl border border-gray-700/50">
             <p class="text-gray-400 mb-2 flex items-center justify-center gap-2 font-bold">
-              <i data-lucide="list-ordered" class="w-5 h-5 text-gray-500"></i> ترتيبك الحالي في الانتظار
+              <i data-lucide="list-ordered" class="w-5 h-5 text-gray-500"></i> ترتيبك الحالي في انتظار اليوم
             </p>
             <div class="mt-2">
               ${posHTML}
             </div>
           </div>
-          
-          ${state.myTicket.status === 'waiting' ? `
-          <button data-action="customer-cancel-booking" class="mt-6 w-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-4 py-3 rounded-xl border border-red-500/30 transition flex items-center justify-center gap-2 font-bold shadow-sm">
-             <i data-lucide="x-circle" class="w-5 h-5"></i> إلغاء حجز هذا الدور
-          </button>
-          ` : ''}
-
         </div>
 
         ${state.shopState.currentTicket > 0 ? `
@@ -1532,33 +1345,26 @@
       const action = target.getAttribute('data-action');
       const shopRef = doc(db, 'artifacts', appId, 'public', 'data', 'shop', 'info');
 
-      // --- Switch Admin Tabs ---
+      // Admin Tab Switching & Filtering
       if (action === 'admin-switch-tab') {
-         state.adminViewTab = target.getAttribute('data-val');
+         state.adminViewTab = target.getAttribute('data-tab');
          renderAdminPanel();
       }
-
-      // --- Admin Date Filter ---
-      if (action === 'admin-filter-date') {
-         const selected = target.getAttribute('data-val');
-         state.adminSelectedDate = selected;
-         
-         const dayWaiting = state.queue.filter(q => q.bookingDate === selected && q.status === 'waiting');
-         const dayCompleted = state.queue.filter(q => q.bookingDate === selected && q.status === 'completed');
-         
-         if (dayWaiting.length === 0 && dayCompleted.length > 0) {
-             state.adminViewTab = 'completed'; 
-         } else if (dayWaiting.length > 0) {
-             state.adminViewTab = 'waiting';
+      
+      if (action === 'admin-select-date') {
+         state.adminSelectedDate = target.getAttribute('data-val');
+         // Automatically switch to history tab if no waiting queue for that day to save time
+         const allWaitingForDate = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
+         if (allWaitingForDate.length === 0) {
+             state.adminViewTab = 'completed';
          }
-         
          renderAdminPanel();
       }
 
-      // --- New feature: Dynamic Services & Products ---
       if (action === 'toggle-services-management') {
          state.showServicesManagement = !state.showServicesManagement;
          renderAdminPanel();
+         document.getElementById('quick-add-area').classList.remove('hidden'); // Keep modal open
       }
 
       if (action === 'add-new-service') {
@@ -1572,7 +1378,8 @@
       }
       if (action === 'remove-service') {
          const val = target.getAttribute('data-val');
-         if (await customConfirm(`هل تريد حذف خدمة (${val})؟`)) {
+         const ok = await customConfirm(`هل تريد حذف خدمة (${val})؟`);
+         if (ok) {
              const newServices = state.shopState.services.filter(s => s !== val);
              await updateDoc(shopRef, { services: newServices });
          }
@@ -1588,7 +1395,8 @@
       }
       if (action === 'remove-product') {
          const val = target.getAttribute('data-val');
-         if (await customConfirm(`هل تريد حذف منتج (${val})؟`)) {
+         const ok = await customConfirm(`هل تريد حذف منتج (${val})؟`);
+         if (ok) {
              const newProducts = state.shopState.products.filter(p => p !== val);
              await updateDoc(shopRef, { products: newProducts });
          }
@@ -1600,13 +1408,13 @@
          const waitingQueue = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
          const targetIndex = waitingQueue.findIndex(q => q.id === id);
          
-         if (targetIndex > 0) { 
+         if (targetIndex > 0) { // Should not be already at top
             const topCust = waitingQueue[0];
             const thisCust = waitingQueue[targetIndex];
 
             if (topCust && topCust.id !== thisCust.id) {
-               if(await customConfirm(`سيتم استبدال دور ${topCust.name || 'العميل الأول'} (رقم ${topCust.ticketNumber}) بـ ${thisCust.name || 'هذا العميل'}. هل أنت متأكد؟`)) {
-                  
+               const ok = await customConfirm(`سيتم استبدال دور ${topCust.name || 'العميل الأول'} (رقم ${topCust.ticketNumber}) بـ ${thisCust.name || 'هذا العميل'}. هل أنت متأكد؟`);
+               if(ok) {
                   const tempTicket = topCust.ticketNumber;
                   const tempDate = topCust.bookingDate;
                   const tempTime = topCust.bookingTime;
@@ -1630,7 +1438,7 @@
          }
       }
 
-      // --- Move Up / Move Down ---
+      // --- Move Up / Move Down (Filtered by Date) ---
       if (action === 'move-up' || action === 'move-down') {
          const idxStr = target.getAttribute('data-idx');
          if(idxStr === null) return;
@@ -1667,7 +1475,7 @@
       if (action === 'upload-gallery') {
          const fileInput = document.getElementById('input-new-gallery-file');
          const file = fileInput.files[0];
-         if (!file) { customAlert("برجاء اختيار صورة من جهازك أولاً."); return; }
+         if (!file) return customAlert("برجاء اختيار صورة من جهازك أولاً.");
          
          const progressEl = document.getElementById('upload-progress');
          if(progressEl) progressEl.classList.remove('hidden');
@@ -1679,7 +1487,7 @@
                  const canvas = document.createElement('canvas');
                  let width = img.width;
                  let height = img.height;
-                 const MAX_WIDTH = 800; 
+                 const MAX_WIDTH = 800; // Limit width to keep Base64 small
                  
                  if (width > MAX_WIDTH) {
                      height = Math.round(height * (MAX_WIDTH / width));
@@ -1710,6 +1518,7 @@
          reader.readAsDataURL(file);
       }
       
+      // Remove Gallery Image
       if (action === 'remove-gallery') {
          const urlToRemove = target.getAttribute('data-val');
          if(urlToRemove) {
@@ -1761,16 +1570,16 @@
            if(waitingQueue.length > 0) {
               const nextCust = waitingQueue[0];
               await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', nextCust.id), { status: 'active', adminMessage: 'تفضل، دورك الآن!' });
-              await updateDoc(shopRef, { currentTicket: nextCust.ticketNumber, timerEndTime: Date.now() + (30 * 60 * 1000) }); // Default 30 min start
+              await updateDoc(shopRef, { currentTicket: nextCust.ticketNumber, timerEndTime: Date.now() + (30 * 60 * 1000) }); 
            } else {
               await updateDoc(shopRef, { timerEndTime: 0, currentTicket: 0 });
-              customAlert("تم الإنهاء، ولا يوجد عملاء في الانتظار.");
+              customAlert("تم الإنهاء، ولا يوجد عملاء آخرين في انتظار هذا اليوم.");
            }
         }
       }
 
       if (action === 'toggle-details') {
-          if (e.target.closest('button[data-action], .action-buttons-wrapper')) return;
+          if (e.target.closest('button[data-action]')) return;
 
           const id = target.getAttribute('data-id');
           const phone = target.getAttribute('data-phone');
@@ -1809,9 +1618,23 @@
           }
       }
 
-      if (action === 'admin-add-modal') {
+      if (action === 'toggle-admin-add-modal') {
          const el = document.getElementById('quick-add-area');
-         if(el.classList.contains('hidden')) el.classList.remove('hidden');
+         const settings = document.getElementById('settings-area');
+         if(el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+            settings.classList.add('hidden'); // Close the other
+         }
+         else el.classList.add('hidden');
+      }
+
+      if (action === 'toggle-admin-settings') {
+         const el = document.getElementById('settings-area');
+         const addArea = document.getElementById('quick-add-area');
+         if(el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+            addArea.classList.add('hidden'); // Close the other
+         }
          else el.classList.add('hidden');
       }
       
@@ -1829,20 +1652,33 @@
       }
 
       if (action === 'delete-customer') {
-        if(await customConfirm('هل أنت متأكد من حذف هذا العميل نهائياً من النظام؟')) {
+        const ok = await customConfirm('هل أنت متأكد من حذف هذا العميل من القائمة نهائياً؟');
+        if(ok) {
           const id = target.getAttribute('data-id');
           await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', id));
         }
       }
-      
-      if (action === 'delete-customer-db') {
-        if(await customConfirm('هل أنت متأكد من حذف هذا العميل نهائياً من قاعدة بيانات العملاء؟')) {
-          const phone = target.getAttribute('data-phone');
-          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', phone));
-          customAlert("تم حذف العميل بنجاح من قاعدة البيانات.");
-        }
+
+      if (action === 'delete-db-customer') {
+         const phone = target.getAttribute('data-phone');
+         const ok = await customConfirm(`هل أنت متأكد من حذف العميل صاحب الرقم (${phone}) نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`);
+         if (ok) {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', phone));
+            customAlert("تم حذف العميل بنجاح.");
+         }
       }
 
+      if (action === 'customer-cancel-booking') {
+        const ok = await customConfirm('هل أنت متأكد من رغبتك في إلغاء حجزك بالكامل؟');
+        if(ok && state.myTicket) {
+           await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', state.myTicket.id));
+           state.myTicket = null;
+           state.showNewBookingForm = false;
+           updateViewVisibility();
+           customAlert("تم إلغاء حجزك بنجاح.");
+        }
+      }
+      
       if (action === 'start-specific-customer') {
          const id = target.getAttribute('data-id');
          const time = parseInt(target.getAttribute('data-time'));
@@ -1860,6 +1696,7 @@
          if (state.adminAdd.services.includes(val)) state.adminAdd.services = state.adminAdd.services.filter(s => s !== val);
          else state.adminAdd.services.push(val);
          renderAdminPanel();
+         document.getElementById('quick-add-area').classList.remove('hidden');
       }
       
       if (action === 'admin-toggle-product') {
@@ -1867,6 +1704,7 @@
          if (state.adminAdd.products.includes(val)) state.adminAdd.products = state.adminAdd.products.filter(p => p !== val);
          else state.adminAdd.products.push(val);
          renderAdminPanel();
+         document.getElementById('quick-add-area').classList.remove('hidden');
       }
 
       if (action === 'admin-add-customer') {
@@ -1875,7 +1713,7 @@
         const dateInput = document.getElementById('admin-add-date').value;
         const timeInput = document.getElementById('admin-add-time').value;
 
-        if (!nameInput) { customAlert("برجاء إدخال اسم العميل"); return; }
+        if (!nameInput) return customAlert("برجاء إدخال اسم العميل أولاً.");
         
         const conflictExists = state.queue.find(q => 
             q.bookingDate === dateInput && 
@@ -1884,9 +1722,8 @@
         );
 
         if (conflictExists && dateInput && timeInput) {
-            if(!(await customConfirm("تحذير: هذا الموعد محجوز مسبقاً من قِبل عميل آخر! هل تريد إضافته على أي حال؟"))) {
-               return;
-            }
+            const ok = await customConfirm("تحذير: هذا الموعد محجوز مسبقاً من قِبل عميل آخر! هل تريد إضافته على أي حال؟");
+            if(!ok) return;
         }
         
         const ticketNum = state.shopState.nextTicketToIssue;
@@ -1919,7 +1756,12 @@
         }
 
         state.adminAdd = { name: '', phone: '', date: '', time: '', services: [], products: [] };
-        customAlert(`تم إضافة العميل وإعطائه رقم دور: ${ticketNum}`);
+        customAlert(`تم إضافة العميل بنجاح. رقم الدور: ${ticketNum}`);
+        
+        document.getElementById('quick-add-area').classList.add('hidden');
+        if(dateInput) state.adminSelectedDate = dateInput;
+        state.adminViewTab = 'waiting';
+        renderAdminPanel();
       }
 
       if (action === 'send-msg') {
@@ -1930,12 +1772,12 @@
         
         const originalText = target.innerText;
         target.innerText = "تم الإرسال ✓";
-        target.classList.replace("bg-amber-500/20", "bg-green-500");
-        target.classList.replace("text-amber-500", "text-white");
+        target.classList.replace("bg-amber-500", "bg-green-500");
+        target.classList.replace("text-gray-900", "text-white");
         setTimeout(() => {
            target.innerText = originalText;
-           target.classList.replace("bg-green-500", "bg-amber-500/20");
-           target.classList.replace("text-white", "text-amber-500");
+           target.classList.replace("bg-green-500", "bg-amber-500");
+           target.classList.replace("text-white", "text-gray-900");
         }, 2000);
       }
       
@@ -1962,7 +1804,8 @@
 
       if (action === 'customer-delay') {
          if(!state.myTicket) return;
-         if(await customConfirm("هل أنت متأكد من رغبتك في أخذ دور متأخر في آخر القائمة؟")) {
+         const ok = await customConfirm("هل أنت متأكد من رغبتك في أخذ دور متأخر في آخر القائمة؟");
+         if(ok) {
             const newTicketNum = state.shopState.nextTicketToIssue;
             await updateDoc(shopRef, { nextTicketToIssue: newTicketNum + 1 });
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', state.myTicket.id), { 
@@ -1970,14 +1813,6 @@
                 presenceStatus: null 
             });
             customAlert(`تم تأخير دورك. رقم دورك الجديد هو: ${newTicketNum}`);
-         }
-      }
-
-      if (action === 'customer-cancel-booking') {
-         if (await customConfirm("هل أنت متأكد من رغبتك في إلغاء حجزك بالكامل؟")) {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', state.myTicket.id));
-            state.myTicket = null;
-            updateViewVisibility();
          }
       }
 
@@ -2018,7 +1853,7 @@
         const bTime = bTimeEl.value;
         
         if (!bDate || !bTime) {
-            customAlert("يرجى اختيار تاريخ ووقت الحجز.");
+            customAlert("يرجى اختيار تاريخ ووقت الحجز أولاً.");
             return;
         }
 
@@ -2029,18 +1864,8 @@
         );
 
         if (conflictExists) {
-            customAlert("عذراً، هذا الموعد محجوز مسبقاً. برجاء اختيار وقت أو تاريخ آخر لتفادي الانتظار المزدوج.");
+            customAlert("عذراً، هذا الموعد محجوز مسبقاً من عميل آخر. برجاء اختيار وقت أو تاريخ مختلف.");
             return;
-        }
-
-        const hasTodayTicket = state.queue.some(q => 
-           q.phone === state.customerPhone && 
-           q.bookingDate === bDate
-        );
-
-        if (hasTodayTicket) {
-           customAlert("لقد قمت بالحجز مسبقاً في هذا اليوم. لا يمكنك حجز أكثر من دور لنفس اليوم.");
-           return;
         }
         
         const ticketNum = state.shopState.nextTicketToIssue;
@@ -2058,6 +1883,19 @@
           selectedProducts: state.selectedProducts,
           timestamp: serverTimestamp()
         });
+
+        // Register customer in DB if new
+        const custRef = doc(db, 'artifacts', appId, 'public', 'data', 'customers', state.customerPhone);
+        const custSnap = await getDoc(custRef);
+        if (!custSnap.exists()) {
+           await setDoc(custRef, {
+              phone: state.customerPhone,
+              name: state.customerName,
+              visitCount: 0,
+              lastVisitDate: new Date().toISOString()
+           });
+        }
+
         updateURLWithPhone();
         state.tempBookingDate = '';
         state.tempBookingTime = '';
@@ -2069,31 +1907,32 @@
         updateViewVisibility();
       }
       if (target.id === 'btn-role-admin') {
-        const pass = await customPassword("برجاء إدخال الرقم السري للإدارة (تيتو):");
-        if (pass === ADMIN_PASSWORD) {
+        const pwd = await customPassword("أدخل الرقم السري للإدارة (تيتو):");
+        if (pwd === ADMIN_PASSWORD) {
            state.role = 'admin';
-           listenToCustomers(); // Start fetching customers DB
            updateViewVisibility();
-        } else if (pass !== null) {
-           customAlert("عفواً! الرقم السري غير صحيح.");
+        } else if (pwd !== null) {
+           customAlert("عذراً، الرقم السري غير صحيح!");
         }
       }
       if (target.id === 'btn-change-account') {
-        state.role = null;
-        state.customerPhone = '';
-        state.customerName = '';
-        state.myTicket = null;
-        state.customerRecord = null;
-        state.showNewBookingForm = false;
-        state.tempBookingDate = '';
-        state.tempBookingTime = '';
-        if(unsubCustomers) { unsubCustomers(); unsubCustomers = null; }
-        try {
-           if (window.location.protocol !== 'blob:' && window.location.origin !== 'null') {
-              window.history.pushState({}, '', window.location.pathname); 
-           }
-        } catch(e) { console.warn("URL update blocked by environment restrictions", e); }
-        updateViewVisibility();
+        const ok = await customConfirm("هل تريد تسجيل الخروج والعودة للرئيسية؟");
+        if(ok) {
+           state.role = null;
+           state.customerPhone = '';
+           state.customerName = '';
+           state.myTicket = null;
+           state.customerRecord = null;
+           state.showNewBookingForm = false;
+           state.tempBookingDate = '';
+           state.tempBookingTime = '';
+           try {
+              if (window.location.protocol !== 'blob:' && window.location.origin !== 'null') {
+                 window.history.pushState({}, '', window.location.pathname); 
+              }
+           } catch(e) { console.warn("URL update blocked by environment restrictions", e); }
+           updateViewVisibility();
+        }
       }
     });
 
@@ -2136,6 +1975,170 @@
          }
       }
     });
+
+    // DB Search handler & Month Filter
+    document.addEventListener('input', (e) => {
+       if(e.target.id === 'db-search-input') {
+          renderAdminPanel();
+       }
+       if (e.target.id === 'admin-month-filter') {
+          state.adminSelectedMonth = e.target.value;
+          renderAdminPanel();
+       }
+    });
+
+    // --- Application Initialization ---
+    const initApp = async () => {
+      lucide.createIcons();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const phoneParam = urlParams.get('phone');
+      const nameParam = urlParams.get('name');
+      const roleParam = urlParams.get('role');
+      
+      const isCustomerLink = roleParam === 'customer' || phoneParam;
+
+      if (isCustomerLink) {
+         const adminBtn = document.getElementById('btn-role-admin');
+         const cardsContainer = document.getElementById('role-cards-container');
+         if (adminBtn && cardsContainer) {
+             adminBtn.remove();
+             cardsContainer.classList.remove('md:grid-cols-2');
+         }
+         state.role = 'customer';
+      }
+      
+      if(phoneParam) {
+        state.customerPhone = phoneParam;
+        if(nameParam) state.customerName = nameParam;
+        state.role = 'customer'; 
+        await fetchCustomerRecord(phoneParam);
+      }
+
+      if (!auth) return;
+
+      try {
+        await signInAnonymously(auth);
+      } catch (error) {
+        console.error("Auth error:", error);
+      }
+
+      onAuthStateChanged(auth, (u) => {
+        state.user = u;
+        if (u) {
+          setupFirebaseListeners();
+        }
+        state.loading = false;
+        updateViewVisibility();
+      });
+    };
+
+    const setupFirebaseListeners = async () => {
+      if (!db || !state.user) return;
+
+      const shopRef = doc(db, 'artifacts', appId, 'public', 'data', 'shop', 'info');
+      const queueCol = collection(db, 'artifacts', appId, 'public', 'data', 'queue');
+      const custCol = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
+
+      try {
+        await setDoc(shopRef, state.shopState, { merge: true });
+      } catch (e) { console.error("Init shop error", e); }
+
+      if(unsubShop) unsubShop();
+      unsubShop = onSnapshot(shopRef, (docSnap) => {
+        if (docSnap.exists()) {
+          state.shopState = { ...state.shopState, ...docSnap.data() };
+          if(!state.shopState.gallery || state.shopState.gallery.length === 0) {
+             state.shopState.gallery = DEFAULT_GALLERY;
+          }
+          if(!state.shopState.services) state.shopState.services = [];
+          if(!state.shopState.products) state.shopState.products = [];
+          
+          updateTimerLogic();
+          updateViewVisibility();
+        }
+      });
+
+      if(unsubQueue) unsubQueue();
+      unsubQueue = onSnapshot(queueCol, (snapshot) => {
+        const qData = [];
+        snapshot.forEach(doc => qData.push({ id: doc.id, ...doc.data() }));
+        
+        qData.sort((a, b) => {
+           if (a.bookingDate && b.bookingDate && a.bookingDate !== b.bookingDate) {
+               return a.bookingDate.localeCompare(b.bookingDate);
+           }
+           if (a.bookingTime && b.bookingTime && a.bookingTime !== b.bookingTime) {
+               return a.bookingTime.localeCompare(b.bookingTime);
+           }
+           return a.ticketNumber - b.ticketNumber;
+        });
+        
+        state.queue = qData;
+        
+        if (state.customerPhone) {
+          const mine = qData.find(q => q.phone === state.customerPhone && (q.status === 'waiting' || q.status === 'active' || q.status === 'completed'));
+          state.myTicket = mine || null;
+        }
+
+        if (state.role === 'admin') {
+            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+            qData.forEach(async (q) => {
+               if (q.status === 'completed' && q.timestamp) {
+                   const ticketTime = q.timestamp.toMillis ? q.timestamp.toMillis() : Date.now();
+                   if (Date.now() - ticketTime > THIRTY_DAYS_MS) {
+                       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', q.id)); } catch(e){}
+                   }
+               }
+            });
+        }
+
+        updateViewVisibility();
+      });
+
+      if(unsubCustomers) unsubCustomers();
+      unsubCustomers = onSnapshot(custCol, (snapshot) => {
+         const cData = [];
+         snapshot.forEach(doc => cData.push({ phone: doc.id, ...doc.data() }));
+         cData.sort((a, b) => (b.visitCount || 0) - (a.visitCount || 0));
+         state.customersDB = cData;
+         if(state.role === 'admin') renderAdminPanel();
+      });
+    };
+
+    const updateTimerLogic = () => {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      const tick = () => {
+        if (state.shopState.timerEndTime > 0) {
+          const remaining = state.shopState.timerEndTime - Date.now();
+          state.timeLeft = remaining > 0 ? remaining : 0;
+        } else {
+          state.timeLeft = 0;
+        }
+        
+        const timerEls = document.querySelectorAll('.timer-display');
+        timerEls.forEach(el => { el.innerText = formatTime(state.timeLeft); });
+        
+        if (state.timeLeft === 0 && state.shopState.timerEndTime > 0) {
+             state.shopState.timerEndTime = 0;
+             updateViewVisibility();
+        }
+
+        if(state.role === 'customer' && state.myTicket && state.myTicket.status === 'waiting') {
+           const waitingBeforeMe = state.queue.filter(q => q.status === 'waiting' && q.ticketNumber < state.myTicket.ticketNumber);
+           const myPosition = waitingBeforeMe.length + 1;
+           const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
+           
+           if(is10MinWarning && !document.getElementById('warning-10min')) {
+              updateViewVisibility();
+           }
+        }
+      };
+      
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    };
 
     document.addEventListener('DOMContentLoaded', initApp);
 
