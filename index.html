@@ -23,13 +23,13 @@
     .animate-fade-in-down { animation: fadeInDown 0.5s ease-out forwards; }
     
     @keyframes marquee {
-      0% { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
     .animate-marquee {
       display: inline-block;
       white-space: nowrap;
-      animation: marquee 25s linear infinite;
+      animation: marquee 45s linear infinite;
     }
     .marquee-container {
       overflow: hidden;
@@ -545,10 +545,23 @@
     const updateBookingTimes = () => {
       const dateEl = document.getElementById('input-booking-date');
       const timeEl = document.getElementById('input-booking-time');
-      if(dateEl && timeEl) {
-         timeEl.innerHTML = getAvailableTimesHTML(dateEl.value);
-         timeEl.disabled = !dateEl.value;
-         if (state.tempBookingTime) timeEl.value = state.tempBookingTime;
+      if(dateEl) {
+         const selDate = dateEl.value;
+         if (timeEl) {
+            timeEl.innerHTML = getAvailableTimesHTML(selDate);
+            timeEl.disabled = !selDate;
+            if (state.tempBookingTime) timeEl.value = state.tempBookingTime;
+         }
+         
+         // Update dynamic waiting count
+         const today = new Date().toISOString().split('T')[0];
+         const dLabel = (selDate === today) ? 'اليوم' : selDate;
+         const wCount = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === selDate).length;
+         
+         const labelEl = document.getElementById('waiting-date-label');
+         const countEl = document.getElementById('waiting-count-label');
+         if(labelEl) labelEl.innerText = dLabel;
+         if(countEl) countEl.innerText = wCount;
       }
 
       const adminDateEl = document.getElementById('admin-add-date');
@@ -1129,10 +1142,21 @@
       const today = new Date().toISOString().split('T')[0];
       const isReturning = state.customerRecord && state.customerRecord.visitCount > 0;
       
-      const waitingCountToday = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === today).length;
+      const tempDate = state.tempBookingDate || today;
+      const waitingCountDate = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === tempDate).length;
+      const dateLabel = (tempDate === today) ? 'اليوم' : tempDate;
+      
       const showForm = !isReturning || state.showNewBookingForm;
 
-      let contentHTML = getGalleryHTML(); 
+      const duaHTML = `
+        <div class="marquee-container bg-amber-500/10 border border-amber-500/30 text-amber-500 py-2 rounded-xl text-sm font-bold shadow-inner mb-6">
+          <div class="animate-marquee">
+            سبحان الله وبحمده، سبحان الله العظيم ❀ اللهم صل وسلم وبارك على نبينا محمد ❀ أستغفر الله العظيم الذي لا إله إلا هو الحي القيوم وأتوب إليه
+          </div>
+        </div>
+      `;
+
+      let contentHTML = duaHTML + getGalleryHTML(); 
 
       const statusColor = isOpen ? 'bg-green-500/20 text-green-500 border-green-500/30' : 'bg-red-500/20 text-red-500 border-red-500/30';
       const statusText = isOpen ? 'مفتوح الآن' : 'مغلق حالياً';
@@ -1156,7 +1180,7 @@
             <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex-1 w-full md:max-w-xs text-center">
                <p class="text-amber-500 font-bold text-sm flex items-center justify-center gap-2 mb-1">
                   <i data-lucide="users" class="w-4 h-4"></i>
-                  منتظرين اليوم: <span class="text-xl font-black bg-amber-500 text-gray-900 px-2 rounded ml-1">${waitingCountToday}</span>
+                  منتظرين (<span id="waiting-date-label">${dateLabel}</span>): <span id="waiting-count-label" class="text-xl font-black bg-amber-500 text-gray-900 px-2 rounded ml-1">${waitingCountDate}</span>
                </p>
                <p class="text-gray-400 text-xs">احجز موعدك الآن حتى لو كان الصالون مغلقاً.</p>
             </div>
@@ -2081,6 +2105,10 @@
        const shopRef = state.shopId ? doc(db, ROOT_COLLECTION, state.shopId) : null;
        if (e.target.id === 'input-new-gallery-file' && shopRef) handleImageUpload(e.target, 'upload-progress', shopRef);
        if (e.target.id === 'portfolio-file-input' && shopRef) handleCustomerImageUpload(e.target);
+       if (e.target.id === 'input-booking-date') {
+           state.tempBookingDate = e.target.value;
+           updateBookingTimes();
+       }
     });
 
     document.getElementById('form-customer-login')?.addEventListener('submit', async (e) => {
