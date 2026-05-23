@@ -2215,7 +2215,10 @@
       const custCol = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
 
       try {
-        await setDoc(shopRef, state.shopState, { merge: true });
+        const shopSnap = await getDoc(shopRef);
+        if (!shopSnap.exists()) {
+           await setDoc(shopRef, state.shopState);
+        }
       } catch (e) { console.error("Init shop error", e); }
 
       if(unsubShop) unsubShop();
