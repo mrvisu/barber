@@ -760,7 +760,8 @@
                      `<span class="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-bold border border-green-500/30">نشط</span>`);
 
           const expDate = new Date(shop.subscriptionEnd).toLocaleDateString('ar-EG');
-          const shopUrl = `${window.location.origin}/?shop=${shop.id}`;
+          const baseUrl = window.location.origin + window.location.pathname;
+          const shopUrl = `${baseUrl}?shop=${shop.id}`;
 
           html += `
              <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
@@ -1047,7 +1048,8 @@
          }).join('');
       }
 
-      const customerLink = `${window.location.origin}/?shop=${state.shopId}&role=customer`;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const customerLink = `${baseUrl}?shop=${state.shopId}&role=customer`;
 
       container.innerHTML = `
         <div class="bg-indigo-500/10 border border-indigo-500/30 p-5 rounded-3xl mb-6 flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg relative overflow-hidden animate-fade-in-down">
@@ -1202,7 +1204,7 @@
                  <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> معلومات الاشتراك والصالون</h4>
                  <div class="bg-gray-950 p-4 rounded-xl border border-gray-800 space-y-3">
                     <div><span class="text-gray-500 text-xs block mb-1">اسم الصالون:</span> <span class="text-white font-bold">${state.shopState.shopName}</span></div>
-                    <div><span class="text-gray-500 text-xs block mb-1">رابط الصالون:</span> <span class="text-blue-400 font-mono text-sm block bg-gray-900 p-2 rounded" dir="ltr">${window.location.origin}/?shop=${state.shopId}</span></div>
+                    <div><span class="text-gray-500 text-xs block mb-1">رابط الصالون:</span> <span class="text-blue-400 font-mono text-sm block bg-gray-900 p-2 rounded" dir="ltr">${baseUrl}?shop=${state.shopId}</span></div>
                     <div><span class="text-gray-500 text-xs block mb-1">تاريخ انتهاء الاشتراك:</span> <span class="text-white font-bold">${new Date(state.shopState.subscriptionEnd).toLocaleDateString('ar-EG')}</span></div>
                  </div>
                  <h4 class="text-amber-500 font-bold mt-4 mb-2 text-sm flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> أوقات العمل</h4>
@@ -2651,3 +2653,5 @@
 </body>
 </html>
 ```
+
+الآن عند دخولك على رابط الصالون الخاص بك كعميل، والضغط على التحقق من الرقم، ستتم العملية بكل سلاسة وستظهر خانات التسجيل. بالتوفيق!
