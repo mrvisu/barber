@@ -83,20 +83,20 @@
           <!-- Customer Button -->
           <button id="btn-role-customer" class="group relative bg-gray-900 border border-gray-800 hover:border-amber-500/50 rounded-3xl p-8 transition-all hover:transform hover:-translate-y-1 overflow-hidden text-right block w-full mx-auto">
             <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <i data-lucide="user" class="w-12 h-12 text-gray-400 group-hover:text-amber-500 mb-6 transition-colors"></i>
-            <h2 class="text-2xl font-bold text-white mb-2">دخول العميل</h2>
-            <p class="text-gray-500 text-sm">حجز دور، تحديد الخدمات المطلوبة، ومتابعة العداد التنازلي للصالون.</p>
-            <div class="mt-6 flex justify-end">
+            <i data-lucide="user" class="w-12 h-12 text-gray-400 group-hover:text-amber-500 mb-6 transition-colors pointer-events-none"></i>
+            <h2 class="text-2xl font-bold text-white mb-2 pointer-events-none">دخول العميل</h2>
+            <p class="text-gray-500 text-sm pointer-events-none">حجز دور، تحديد الخدمات المطلوبة، ومتابعة العداد التنازلي للصالون.</p>
+            <div class="mt-6 flex justify-end pointer-events-none">
               <i data-lucide="chevron-right" class="w-6 h-6 text-amber-500 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all"></i>
             </div>
           </button>
           <!-- Admin Button -->
           <button id="btn-role-admin" class="group relative bg-gray-900 border border-gray-800 hover:border-amber-500/50 rounded-3xl p-8 transition-all hover:transform hover:-translate-y-1 overflow-hidden text-right block w-full">
             <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <i data-lucide="settings" class="w-12 h-12 text-gray-400 group-hover:text-amber-500 mb-6 transition-colors"></i>
-            <h2 class="text-2xl font-bold text-white mb-2">دخول تيتو (الإدارة)</h2>
-            <p class="text-gray-500 text-sm">التحكم في الطابور، إضافة عملاء، ضبط العداد التنازلي وتأكيد الحضور.</p>
-            <div class="mt-6 flex justify-end">
+            <i data-lucide="settings" class="w-12 h-12 text-gray-400 group-hover:text-amber-500 mb-6 transition-colors pointer-events-none"></i>
+            <h2 class="text-2xl font-bold text-white mb-2 pointer-events-none">دخول تيتو (الإدارة)</h2>
+            <p class="text-gray-500 text-sm pointer-events-none">التحكم في الطابور، إضافة عملاء، ضبط العداد التنازلي وتأكيد الحضور.</p>
+            <div class="mt-6 flex justify-end pointer-events-none">
               <i data-lucide="chevron-right" class="w-6 h-6 text-amber-500 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all"></i>
             </div>
           </button>
@@ -203,7 +203,6 @@
         messageEl.innerText = options.message || '';
         btnConfirm.innerText = options.confirmText || 'موافق';
         
-        // Handle custom HTML content
         if(options.htmlContent) {
            contentEl.innerHTML = options.htmlContent;
            contentEl.classList.remove('hidden');
@@ -245,7 +244,6 @@
     const customPrompt = (msg, def = '') => showModal({ type: 'prompt', message: msg, defaultValue: def, iconName: 'edit-3', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'حفظ' });
     const customPassword = (msg) => showModal({ type: 'prompt', inputType: 'password', message: msg, iconName: 'lock', iconBgClass: 'bg-red-500/20 text-red-500', confirmText: 'دخول' });
     
-    // Custom modal for customer details in DB
     const showCustomerDetailsModal = (customer) => {
       const firstVisit = customer.firstVisitDate ? new Date(customer.firstVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
       const lastVisit = customer.lastVisitDate ? new Date(customer.lastVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
@@ -283,7 +281,6 @@
       });
     };
 
-
     // --- Firebase Setup ---
     const firebaseConfig = {
       apiKey: "AIzaSyCI0L2fO4_bdltYF7Hddjcxa6seSDbrMwc",
@@ -299,9 +296,8 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const appId = 'tito-barber-app';
-    const ADMIN_PASSWORD = "12345"; // الرقم السري الخاص بتيتو
+    const ADMIN_PASSWORD = "12345";
 
-    // Default Images for the slider
     const DEFAULT_GALLERY = [
        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=80",
        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=80",
@@ -316,17 +312,15 @@
       shopState: {
         isOpen: false,
         currentTicket: 0,
-        nextTicketToIssue: 1,
         timerEndTime: 0,
         totalRatings: 0,
         ratingSum: 0,
-        workingHours: { start: "10:00", end: "23:00" }, 
         services: ["حلاقة شعر", "عمل فتلة", "ماسك للوجه", "حمام بخار", "فرد شعر"],
         products: ["جيل تصفيف", "كريم شعر", "زيت لحية"],
         gallery: DEFAULT_GALLERY
       },
       queue: [],
-      customersDB: [], // To store fetched customers
+      customersDB: [], 
       customerPhone: '',
       customerName: '', 
       customerRecord: null, 
@@ -338,12 +332,10 @@
       tempBookingDate: '', 
       tempBookingTime: '',
       
-      // Admin View Filters
       adminSelectedDate: new Date().toISOString().split('T')[0],
       adminSelectedMonth: new Date().toISOString().slice(0, 7),
       adminViewTab: 'waiting',
       
-      // Admin Direct Add State
       adminAdd: {
          name: '',
          phone: '',
@@ -426,11 +418,32 @@
        `;
     };
 
+    const getPersonalGalleryHTML = () => {
+       const photos = state.customerRecord?.photos || [];
+       if(photos.length === 0) return '';
+       return `
+          <div class="mb-8 animate-fade-in-down bg-gray-800/40 p-5 rounded-2xl border border-amber-500/20">
+             <h3 class="text-lg font-bold text-amber-500 mb-4 flex items-center gap-2">
+                <i data-lucide="camera" class="w-5 h-5"></i> كتالوج قصاتك السابقة
+             </h3>
+             <div class="flex gap-4 overflow-x-auto custom-scrollbar pb-4">
+                ${photos.map(url => `
+                   <div class="relative w-32 h-32 shrink-0 rounded-xl overflow-hidden border border-gray-700 shadow-lg">
+                      <img src="${url}" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                   </div>
+                `).join('')}
+             </div>
+             <p class="text-xs text-gray-500 mt-2">اضغط شيك للحجز لاختيار الموعد الجديد.</p>
+          </div>
+       `;
+    };
+
     const getAvailableTimesHTML = (selDate) => {
       if(!selDate) return '<option value="">اختر التاريخ أولاً...</option>';
 
-      const start = state.shopState.workingHours?.start || '10:00';
-      const end = state.shopState.workingHours?.end || '23:00';
+      // Standard fixed working hours for generating times
+      const start = '10:00';
+      const end = '23:00';
       let [sH, sM] = start.split(':').map(Number);
       let [eH, eM] = end.split(':').map(Number);
 
@@ -577,7 +590,7 @@
       // Generate Days Filter for the selected month
       const uniqueDays = [...new Set(state.queue.map(q => q.bookingDate))].filter(d => d && d.startsWith(state.adminSelectedMonth)).sort();
       if (!uniqueDays.includes(today) && today.startsWith(state.adminSelectedMonth)) {
-         uniqueDays.unshift(today); // Always show today if it's in the selected month
+         uniqueDays.unshift(today);
       }
       
       const daysFilterHTML = uniqueDays.map(date => {
@@ -616,7 +629,6 @@
                 bookingTimeDisplay = `<div class="text-amber-500 text-sm font-bold flex items-center gap-1 mb-2 bg-amber-500/10 inline-block px-2 py-1 rounded"><i data-lucide="clock" class="w-4 h-4 inline"></i> الموعد: الساعة ${q.bookingTime}</div>`;
              }
 
-             // Extract created time
              let createdTimeStr = '';
              if (q.timestamp && q.timestamp.toDate) {
                  createdTimeStr = q.timestamp.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -634,42 +646,42 @@
                      <div class="flex-1 pointer-events-none">
                        ${bookingTimeDisplay}
                        <div class="flex items-center gap-3 mb-2 pointer-events-auto">
-                         <span class="bg-amber-500 text-gray-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md shrink-0">
+                         <span class="bg-amber-500 text-gray-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md shrink-0 pointer-events-none">
                            ${q.ticketNumber}
                          </span>
                          <div>
                            <div class="flex items-center flex-wrap gap-2">
-                             <span class="font-bold text-lg text-white">${customerNameDisplay}</span>
-                             <button data-action="edit-customer-name" data-id="${q.id}" data-phone="${q.phone}" data-current-name="${customerNameDisplay}" class="text-gray-400 hover:text-amber-500 transition relative z-10" title="تعديل الاسم" onclick="event.stopPropagation();">
-                               <i data-lucide="edit-2" class="w-4 h-4"></i>
+                             <span class="font-bold text-lg text-white pointer-events-none">${customerNameDisplay}</span>
+                             <button data-action="edit-customer-name" data-id="${q.id}" data-phone="${q.phone}" data-current-name="${customerNameDisplay}" class="text-gray-400 hover:text-amber-500 transition relative z-10" title="تعديل الاسم">
+                               <i data-lucide="edit-2" class="w-4 h-4 pointer-events-none"></i>
                              </button>
                              ${presenceBadge}
                            </div>
-                           <span class="text-sm text-gray-400 block font-mono" dir="ltr">${q.phone}</span>
+                           <span class="text-sm text-gray-400 block font-mono pointer-events-none" dir="ltr">${q.phone}</span>
                            ${createdTimeHTML}
                          </div>
                        </div>
-                       <div class="text-sm text-gray-300 mt-2 bg-gray-900/80 p-2 rounded-lg inline-block border border-gray-700/50">
+                       <div class="text-sm text-gray-300 mt-2 bg-gray-900/80 p-2 rounded-lg inline-block border border-gray-700/50 pointer-events-none">
                          <span class="text-amber-500/80 font-bold"><i data-lucide="scissors" class="w-3 h-3 inline"></i> الطلبات:</span> 
                          ${q.selectedServices?.length ? q.selectedServices.join('، ') : 'بدون'} 
                          ${q.selectedProducts?.length ? `| <span class="text-amber-500/80 font-bold"><i data-lucide="shopping-bag" class="w-3 h-3 inline"></i> المنتجات:</span> ${q.selectedProducts.join('، ')}` : ''}
                        </div>
                      </div>
                      
-                     <div class="flex flex-wrap md:flex-nowrap items-center justify-center gap-1 bg-gray-900 p-1.5 rounded-xl border border-gray-700 shrink-0 relative z-10 shadow-inner" onclick="event.stopPropagation();">
+                     <div class="flex flex-wrap md:flex-nowrap items-center justify-center gap-1 bg-gray-900 p-1.5 rounded-xl border border-gray-700 shrink-0 relative z-10 shadow-inner">
                        <button data-action="swap-with-top" data-id="${q.id}" class="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 p-2 rounded-lg transition disabled:opacity-30 flex items-center gap-1 text-xs font-bold" title="إدخال كبديل للدور الأول" ${isFirst ? 'disabled' : ''}>
-                         <i data-lucide="arrow-up-to-line" class="w-5 h-5"></i> بديل
+                         <i data-lucide="arrow-up-to-line" class="w-5 h-5 pointer-events-none"></i> بديل
                        </button>
                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
                        <button data-action="move-up" data-idx="${idx}" class="text-gray-400 hover:text-amber-500 hover:bg-gray-800 p-2 rounded-lg transition disabled:opacity-30" title="تقديم الدور" ${isFirst ? 'disabled' : ''}>
-                         <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                         <i data-lucide="arrow-up" class="w-5 h-5 pointer-events-none"></i>
                        </button>
                        <button data-action="move-down" data-idx="${idx}" class="text-gray-400 hover:text-amber-500 hover:bg-gray-800 p-2 rounded-lg transition disabled:opacity-30" title="تأخير الدور" ${isLast ? 'disabled' : ''}>
-                         <i data-lucide="arrow-down" class="w-5 h-5"></i>
+                         <i data-lucide="arrow-down" class="w-5 h-5 pointer-events-none"></i>
                        </button>
                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
                        <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-white hover:bg-red-500 p-2 rounded-lg transition border border-transparent hover:border-red-400" title="إلغاء الحجز">
-                         <i data-lucide="trash-2" class="w-5 h-5"></i>
+                         <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i>
                        </button>
                      </div>
                    </div>
@@ -716,19 +728,19 @@
                return `
                <div class="bg-gray-800/40 p-4 rounded-xl border border-gray-700 mb-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3 hover:bg-gray-800 transition group">
                   <div class="flex items-start gap-3">
-                     <div class="bg-gray-900 border border-gray-700 text-gray-400 font-bold w-10 h-10 rounded-lg flex items-center justify-center text-sm shadow-inner shrink-0">#${q.ticketNumber}</div>
+                     <div class="bg-gray-900 border border-gray-700 text-gray-400 font-bold w-10 h-10 rounded-lg flex items-center justify-center text-sm shadow-inner shrink-0 pointer-events-none">#${q.ticketNumber}</div>
                      <div>
-                        <div class="font-bold text-white text-base flex items-center gap-2 mb-1">
+                        <div class="font-bold text-white text-base flex items-center gap-2 mb-1 pointer-events-none">
                           ${q.name || 'بدون اسم'}
                           ${ratingBadge}
                         </div>
-                        <div class="text-xs text-gray-400 font-mono" dir="ltr">${q.phone}</div>
-                        <div class="text-xs text-gray-500 mt-1.5"><i data-lucide="scissors" class="w-3 h-3 inline"></i> ${q.selectedServices?.join('، ') || 'عام'}</div>
+                        <div class="text-xs text-gray-400 font-mono pointer-events-none" dir="ltr">${q.phone}</div>
+                        <div class="text-xs text-gray-500 mt-1.5 pointer-events-none"><i data-lucide="scissors" class="w-3 h-3 inline pointer-events-none"></i> ${q.selectedServices?.join('، ') || 'عام'}</div>
                      </div>
                   </div>
-                  <div class="flex sm:flex-col items-center justify-end gap-2 border-t sm:border-t-0 border-gray-700 pt-2 sm:pt-0">
-                    <button data-action="trigger-portfolio-upload" class="bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-amber-500/30"><i data-lucide="camera" class="w-3 h-3"></i> صورة للعمل</button>
-                    <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-red-500/20"><i data-lucide="trash-2" class="w-3 h-3"></i> حذف السجل</button>
+                  <div class="flex sm:flex-col items-center justify-end gap-2 border-t sm:border-t-0 border-gray-700 pt-2 sm:pt-0 relative z-10">
+                    <button data-action="trigger-portfolio-upload" data-phone="${q.phone}" class="bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-amber-500/30"><i data-lucide="camera" class="w-3 h-3 pointer-events-none"></i> صورة للعمل</button>
+                    <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-red-500/20"><i data-lucide="trash-2" class="w-3 h-3 pointer-events-none"></i> حذف السجل</button>
                   </div>
                </div>
                `;
@@ -751,15 +763,15 @@
             const dateStr = c.lastVisitDate ? new Date(c.lastVisitDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : '---';
             return `
                <tr class="border-b border-gray-800 hover:bg-gray-800/70 transition group cursor-pointer" data-action="view-db-customer" data-phone="${c.phone}">
-                  <td class="p-3 text-white font-bold group-hover:text-amber-500 transition-colors">${c.name || '---'}</td>
-                  <td class="p-3 text-gray-400 font-mono text-sm" dir="ltr">${c.phone}</td>
-                  <td class="p-3 text-center text-amber-500 font-bold">${c.visitCount || 0}</td>
-                  <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
-                  <td class="p-3" onclick="event.stopPropagation();">
+                  <td class="p-3 text-white font-bold group-hover:text-amber-500 transition-colors pointer-events-none">${c.name || '---'}</td>
+                  <td class="p-3 text-gray-400 font-mono text-sm pointer-events-none" dir="ltr">${c.phone}</td>
+                  <td class="p-3 text-center text-amber-500 font-bold pointer-events-none">${c.visitCount || 0}</td>
+                  <td class="p-3 text-gray-500 text-sm pointer-events-none">${dateStr}</td>
+                  <td class="p-3 relative z-10">
                      <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <a href="https://wa.me/${c.phone.replace(/[^0-9]/g, '')}" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
-                        <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال"><i data-lucide="phone" class="w-4 h-4"></i></a>
-                        <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="حذف من السجل نهائياً"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                        <a href="https://wa.me/${c.phone.replace(/[^0-9]/g, '')}" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب"><i data-lucide="message-circle" class="w-4 h-4 pointer-events-none"></i></a>
+                        <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال"><i data-lucide="phone" class="w-4 h-4 pointer-events-none"></i></a>
+                        <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="حذف من السجل نهائياً"><i data-lucide="trash" class="w-4 h-4 pointer-events-none"></i></button>
                      </div>
                   </td>
                </tr>
@@ -775,22 +787,22 @@
            </h2>
            <div class="flex flex-wrap justify-center gap-3 w-full md:w-auto">
              <button data-action="toggle-shop" class="flex-1 md:flex-none px-6 py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-2 transition-all ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border">
-               <i data-lucide="power" class="w-5 h-5"></i>
+               <i data-lucide="power" class="w-5 h-5 pointer-events-none"></i>
                ${isOpen ? 'إغلاق الصالون' : 'فتح الصالون'}
              </button>
              <button data-action="toggle-admin-add-modal" class="flex-1 md:flex-none bg-amber-500 hover:bg-amber-400 text-gray-900 px-6 py-3 font-bold rounded-xl shadow-md flex items-center justify-center gap-2 transition-all">
-                <i data-lucide="user-plus" class="w-5 h-5"></i> إضافة عميل
+                <i data-lucide="user-plus" class="w-5 h-5 pointer-events-none"></i> إضافة عميل
              </button>
              <button data-action="toggle-admin-settings" class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 font-bold rounded-xl border border-gray-700 shadow-md flex items-center justify-center gap-2 transition-all">
-                <i data-lucide="settings" class="w-5 h-5 text-gray-400"></i> إعدادات
+                <i data-lucide="settings" class="w-5 h-5 text-gray-400 pointer-events-none"></i> إعدادات
              </button>
            </div>
         </div>
 
         <!-- Hidden Panels: Quick Add -->
         <div id="quick-add-area" class="hidden mb-6 bg-gray-900 rounded-3xl p-6 md:p-8 border border-amber-500/30 shadow-2xl animate-fade-in-down relative z-20">
-           <button data-action="toggle-admin-add-modal" class="absolute top-4 left-4 text-gray-500 hover:text-white bg-gray-800 p-2 rounded-xl transition"><i data-lucide="x" class="w-5 h-5"></i></button>
-           <h3 class="text-xl font-black text-white mb-6 flex items-center gap-2"><i data-lucide="user-plus" class="w-6 h-6 text-amber-500"></i> إضافة عميل مباشر بالصالون</h3>
+           <button data-action="toggle-admin-add-modal" class="absolute top-4 left-4 text-gray-500 hover:text-white bg-gray-800 p-2 rounded-xl transition"><i data-lucide="x" class="w-5 h-5 pointer-events-none"></i></button>
+           <h3 class="text-xl font-black text-white mb-6 flex items-center gap-2"><i data-lucide="user-plus" class="w-6 h-6 text-amber-500 pointer-events-none"></i> إضافة عميل مباشر بالصالون</h3>
            
            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="space-y-4">
@@ -819,9 +831,9 @@
               <!-- Services & Products selection inside add modal -->
               <div class="bg-gray-800/40 p-5 rounded-2xl border border-gray-700">
                  <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-white font-bold flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-amber-500"></i> الخدمات والمنتجات</h4>
+                    <h4 class="text-white font-bold flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-amber-500 pointer-events-none"></i> الخدمات والمنتجات</h4>
                     <button data-action="toggle-services-management" class="text-gray-400 hover:text-amber-500 transition bg-gray-900 p-2 rounded-xl border border-gray-700 hover:border-amber-500/50" title="إدارة القوائم">
-                      <i data-lucide="settings-2" class="w-4 h-4"></i>
+                      <i data-lucide="settings-2" class="w-4 h-4 pointer-events-none"></i>
                     </button>
                  </div>
 
@@ -873,51 +885,34 @@
            </div>
            
            <button data-action="admin-add-customer" class="w-full mt-6 bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2 text-lg">
-              <i data-lucide="check-circle" class="w-6 h-6"></i> تأكيد إضافة العميل وإصدار الرقم
+              <i data-lucide="check-circle" class="w-6 h-6 pointer-events-none"></i> تأكيد إضافة العميل وإصدار الرقم
            </button>
         </div>
 
         <!-- Hidden Panels: Settings -->
         <div id="settings-area" class="hidden mb-6 p-6 md:p-8 bg-gray-900 rounded-3xl border border-gray-800 shadow-2xl animate-fade-in-down relative z-20">
-           <button data-action="toggle-admin-settings" class="absolute top-4 left-4 text-gray-500 hover:text-white bg-gray-800 p-2 rounded-xl transition"><i data-lucide="x" class="w-5 h-5"></i></button>
-           <h3 class="text-xl font-black text-white mb-6 flex items-center gap-2 border-b border-gray-800 pb-4"><i data-lucide="settings" class="w-6 h-6 text-gray-400"></i> إعدادات الصالون الإضافية</h3>
+           <button data-action="toggle-admin-settings" class="absolute top-4 left-4 text-gray-500 hover:text-white bg-gray-800 p-2 rounded-xl transition"><i data-lucide="x" class="w-5 h-5 pointer-events-none"></i></button>
+           <h3 class="text-xl font-black text-white mb-6 flex items-center gap-2 border-b border-gray-800 pb-4"><i data-lucide="settings" class="w-6 h-6 text-gray-400 pointer-events-none"></i> إعدادات الصالون الإضافية</h3>
            
-           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+           <div class="grid grid-cols-1 gap-8">
               <!-- Gallery -->
               <div class="space-y-4">
-                 <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> صور إعلانات ومعرض الصالون</h4>
-                 <div class="flex flex-col gap-3">
+                 <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="image" class="w-4 h-4 pointer-events-none"></i> صور إعلانات ومعرض الصالون</h4>
+                 <div class="flex flex-col gap-3 max-w-sm">
                     <input type="file" id="input-new-gallery-file" accept="image/*" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-800 file:text-white hover:file:bg-gray-700 cursor-pointer transition" />
-                    <button data-action="upload-gallery" class="w-full bg-gray-800 text-white hover:bg-amber-500 hover:text-gray-900 px-4 py-3 rounded-xl font-bold text-sm transition flex justify-center items-center gap-2 border border-gray-700 hover:border-amber-500"><i data-lucide="upload-cloud" class="w-5 h-5"></i> رفع الصورة يدوياً</button>
+                    <button data-action="upload-gallery" class="w-full bg-gray-800 text-white hover:bg-amber-500 hover:text-gray-900 px-4 py-3 rounded-xl font-bold text-sm transition flex justify-center items-center gap-2 border border-gray-700 hover:border-amber-500"><i data-lucide="upload-cloud" class="w-5 h-5 pointer-events-none"></i> رفع الصورة يدوياً</button>
                     <div id="upload-progress" class="hidden text-amber-500 text-xs font-bold animate-pulse text-center bg-amber-500/10 p-2 rounded-lg">جاري معالجة ورفع الصورة...</div>
                  </div>
-                 <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto custom-scrollbar pr-1 mt-2">
+                 <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 max-h-48 overflow-y-auto custom-scrollbar pr-1 mt-2">
                     ${(state.shopState.gallery || []).map(url => `
                       <div class="relative group rounded-lg overflow-hidden border border-gray-700 aspect-square">
                         <img src="${url}" class="w-full h-full object-cover" />
                         <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button data-action="remove-gallery" data-val="${url}" class="bg-red-500 text-white p-2 rounded-full shadow-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                          <button data-action="remove-gallery" data-val="${url}" class="bg-red-500 text-white p-2 rounded-full shadow-lg"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>
                         </div>
                       </div>
                     `).join('')}
                  </div>
-              </div>
-              
-              <!-- Working Hours -->
-              <div class="space-y-4 md:border-r border-gray-800 md:pr-8">
-                 <h4 class="text-amber-500 font-bold mb-2 text-sm flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> أوقات العمل الرسمية</h4>
-                 <p class="text-gray-500 text-xs leading-relaxed mb-4">هذه الأوقات ستحدد متى يمكن للعميل حجز موعد جديد من المنزل.</p>
-                 <div class="flex gap-4 mb-4">
-                    <div class="flex-1 bg-gray-950 border border-gray-700 rounded-xl p-3 flex flex-col gap-1">
-                       <span class="text-xs text-gray-500 font-bold">بداية العمل (من)</span>
-                       <input type="time" id="shop-start-time" value="${state.shopState.workingHours?.start || '10:00'}" class="bg-transparent w-full text-white outline-none font-bold" />
-                    </div>
-                    <div class="flex-1 bg-gray-950 border border-gray-700 rounded-xl p-3 flex flex-col gap-1">
-                       <span class="text-xs text-gray-500 font-bold">نهاية العمل (إلى)</span>
-                       <input type="time" id="shop-end-time" value="${state.shopState.workingHours?.end || '23:00'}" class="bg-transparent w-full text-white outline-none font-bold" />
-                    </div>
-                 </div>
-                 <button data-action="save-hours" class="w-full bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 border border-amber-500/50 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"><i data-lucide="save" class="w-5 h-5"></i> حفظ أوقات العمل</button>
               </div>
            </div>
         </div>
@@ -944,7 +939,7 @@
               <div class="flex flex-col gap-3">
                  ${state.shopState.timerEndTime > Date.now() || state.shopState.currentTicket > 0 ? `
                    <button data-action="end-current" class="text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white py-3 rounded-xl border border-gray-700 transition font-bold">إنهاء الدور وإخلاء الكرسي فقط</button>
-                   <button data-action="end-and-next" class="text-base bg-amber-500 text-gray-900 hover:bg-amber-400 py-4 rounded-xl transition font-black shadow-lg flex items-center justify-center gap-2"><i data-lucide="check-check" class="w-5 h-5"></i> إنهاء وبدء الدور التالي فوراً</button>
+                   <button data-action="end-and-next" class="text-base bg-amber-500 text-gray-900 hover:bg-amber-400 py-4 rounded-xl transition font-black shadow-lg flex items-center justify-center gap-2"><i data-lucide="check-check" class="w-5 h-5 pointer-events-none"></i> إنهاء وبدء الدور التالي فوراً</button>
                  ` : '<div class="text-gray-600 text-sm py-2">الكرسي فارغ حالياً</div>'}
               </div>
             </div>
@@ -1040,17 +1035,14 @@
       const today = new Date().toISOString().split('T')[0];
       const isReturning = state.customerRecord && state.customerRecord.visitCount > 0;
       
-      // احسب فقط عدد المنتظرين "اليوم" للعميل لكي لا يخاف من العدد الكلي
       const waitingCountToday = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === today).length;
-      
       const showForm = !isReturning || state.showNewBookingForm;
 
-      let contentHTML = getGalleryHTML(); // Prepend Gallery Slider
+      let contentHTML = getGalleryHTML(); 
 
-      // Banner for Shop Status and Queue Count
       const statusColor = isOpen ? 'bg-green-500/20 text-green-500 border-green-500/30' : 'bg-red-500/20 text-red-500 border-red-500/30';
       const statusText = isOpen ? 'مفتوح الآن' : 'مغلق حالياً';
-      const workingH = state.shopState.workingHours || {start: '10:00', end: '23:00'};
+      const workingH = {start: '10:00', end: '23:00'};
       
       contentHTML += `
          <div class="bg-gray-800/60 p-5 rounded-2xl border border-gray-700 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg animate-fade-in-down">
@@ -1082,6 +1074,8 @@
          const diffDays = Math.floor((new Date() - lastV) / (1000 * 60 * 60 * 24));
          const exactDateStr = lastV.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
          
+         contentHTML += getPersonalGalleryHTML();
+
          contentHTML += `
             <div class="bg-gray-900 p-6 md:p-8 rounded-2xl border border-gray-800 shadow-xl mt-4 animate-fade-in-down">
               <div class="flex items-center gap-4 mb-6 border-b border-gray-800 pb-6">
@@ -1110,9 +1104,9 @@
 
               <div class="bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/30 p-6 rounded-2xl text-center relative overflow-hidden group cursor-pointer" data-action="show-booking-form">
                  <div class="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 transition"></div>
-                 <i data-lucide="calendar-plus" class="w-10 h-10 text-amber-500 mx-auto mb-3 group-hover:scale-110 transition duration-300"></i>
-                 <h3 class="text-xl font-bold text-white mb-2">حجز دور جديد</h3>
-                 <p class="text-gray-400 text-sm">احجز دورك الآن واحصل على قصة شعر رائعة كالعادة.</p>
+                 <i data-lucide="calendar-plus" class="w-10 h-10 text-amber-500 mx-auto mb-3 group-hover:scale-110 transition duration-300 pointer-events-none"></i>
+                 <h3 class="text-xl font-bold text-white mb-2 pointer-events-none">شيك للحجز واستخراج دور جديد</h3>
+                 <p class="text-gray-400 text-sm pointer-events-none">اضغط هنا لفحص المواعيد المتاحة وتسجيل طلبك.</p>
               </div>
             </div>
          `;
@@ -1121,7 +1115,7 @@
       if (showForm) {
          let backBtnHTML = '';
          if(isReturning) {
-            backBtnHTML = `<button data-action="hide-booking-form" class="text-sm text-gray-500 hover:text-white flex items-center gap-1 transition"><i data-lucide="arrow-right" class="w-4 h-4"></i> رجوع للرئيسية</button>`;
+            backBtnHTML = `<button data-action="hide-booking-form" class="text-sm text-gray-500 hover:text-white flex items-center gap-1 transition"><i data-lucide="arrow-right" class="w-4 h-4 pointer-events-none"></i> رجوع للرئيسية</button>`;
          }
 
          contentHTML += `
@@ -1137,7 +1131,7 @@
             <!-- تحديد الموعد -->
             <div class="mb-8 bg-gray-800/40 p-5 rounded-2xl border border-amber-500/20">
               <h3 class="text-lg font-bold text-amber-500 mb-4 flex items-center gap-2">
-                <i data-lucide="calendar" class="w-5 h-5"></i> متى ترغب في الحضور؟ <span class="text-red-500">*</span>
+                <i data-lucide="calendar" class="w-5 h-5 pointer-events-none"></i> متى ترغب في الحضور؟ <span class="text-red-500">*</span>
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1156,7 +1150,7 @@
 
             <div class="mb-8">
               <h3 class="text-lg font-bold text-amber-500 mb-4 flex items-center gap-2">
-                <i data-lucide="scissors" class="w-5 h-5"></i> تحديد نوع الحلاقة والخدمات
+                <i data-lucide="scissors" class="w-5 h-5 pointer-events-none"></i> تحديد نوع الحلاقة والخدمات
               </h3>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 ${(state.shopState.services || []).map(service => {
@@ -1168,7 +1162,7 @@
 
             <div class="mb-8">
               <h3 class="text-lg font-bold text-amber-500 mb-4 flex items-center gap-2">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i> طلب منتجات العناية
+                <i data-lucide="shopping-bag" class="w-5 h-5 pointer-events-none"></i> طلب منتجات العناية
               </h3>
               <div class="grid grid-cols-2 gap-3">
                 ${(state.shopState.products || []).map(product => {
@@ -1178,8 +1172,8 @@
               </div>
             </div>
 
-            <button data-action="book-ticket" class="w-full py-4 rounded-xl font-bold text-xl transition shadow-lg bg-amber-500 hover:bg-amber-400 text-gray-900 shadow-[0_0_20px_rgba(245,158,11,0.4)]">
-              تأكيد الحجز وإصدار الرقم
+            <button data-action="book-ticket" class="w-full py-4 rounded-xl font-bold text-xl transition shadow-lg bg-amber-500 hover:bg-amber-400 text-gray-900 shadow-[0_0_20px_rgba(245,158,11,0.4)] flex justify-center items-center gap-2">
+              <i data-lucide="check-circle" class="w-6 h-6 pointer-events-none"></i> تأكيد الحجز وإصدار الرقم
             </button>
           </div>
          `;
@@ -1189,7 +1183,7 @@
       lucide.createIcons();
       initSlider();
       if(showForm) {
-         if(!state.tempBookingDate) state.tempBookingDate = today; // ensure date is set
+         if(!state.tempBookingDate) state.tempBookingDate = today;
          setTimeout(updateBookingTimes, 0); 
       }
     };
@@ -1197,9 +1191,9 @@
     const renderCustomerDashboard = () => {
       const container = document.getElementById('customer-dashboard-content');
       
-      let htmlContent = getGalleryHTML(); // Prepend Gallery Slider
+      let htmlContent = getGalleryHTML(); 
 
-      // 1) COMPLETED STATUS - RATE EXPERIENCE
+      // 1) COMPLETED STATUS
       if (state.myTicket.status === 'completed') {
          let ratingUI = '';
          if(state.myTicket.hasRated) {
@@ -1229,7 +1223,7 @@
                <p class="text-lg text-gray-300 mb-8">نتمنى أن تكون قصة شعرك قد نالت إعجابك. دمت متألقاً.</p>
                ${ratingUI}
                <div class="mt-8 pt-6 border-t border-gray-800">
-                 <button id="btn-change-account" class="text-gray-500 hover:text-amber-500 underline text-sm">العودة للرئيسية لحجز موعد جديد</button>
+                 <button id="btn-change-account-link" data-action="logout-link" class="text-gray-500 hover:text-amber-500 underline text-sm">العودة للرئيسية لحجز موعد جديد</button>
                </div>
             </div>
          `;
@@ -1268,13 +1262,37 @@
       const tNum = state.myTicket.ticketNumber;
       const cNum = state.shopState.currentTicket || '--';
 
+      const now = new Date();
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      let isTimeClose = true;
+      const today = new Date().toISOString().split('T')[0];
+
+      if(state.myTicket.bookingTime && state.myTicket.bookingDate === today) {
+          const [bH, bM] = state.myTicket.bookingTime.split(':').map(Number);
+          const bookingTotalMins = bH * 60 + bM;
+          const currentTotalMins = currentH * 60 + currentM;
+          // If the booking is more than 60 minutes away, don't show "دورك القادم"
+          if (bookingTotalMins - currentTotalMins > 60) {
+              isTimeClose = false;
+          }
+      }
+
       let posHTML = '';
-      if (myPosition === 1) posHTML = `<span class="text-green-400 bg-green-400/10 px-4 py-1.5 rounded-full border border-green-400/30 font-bold shadow-sm">أنت الدور القادم! استعد يا ${state.customerName}</span>`;
-      else if (myPosition > 1) posHTML = `<span class="text-lg">يوجد قبلك <span class="text-amber-500 font-black text-2xl mx-1">${myPosition - 1}</span> أشخاص لليوم</span>`;
-      else posHTML = `<span class="text-gray-500">جاري الحساب...</span>`;
+      if (myPosition === 1) {
+         if(isTimeClose) {
+            posHTML = `<span class="text-green-400 bg-green-400/10 px-4 py-1.5 rounded-full border border-green-400/30 font-bold shadow-sm">أنت الدور القادم! استعد يا ${state.customerName}</span>`;
+         } else {
+            posHTML = `<span class="text-blue-400 bg-blue-400/10 px-4 py-1.5 rounded-full border border-blue-400/30 font-bold shadow-sm">أنت الدور الأول لموعدك اللاحق اليوم (${state.myTicket.bookingTime})</span>`;
+         }
+      } else if (myPosition > 1) {
+         posHTML = `<span class="text-lg">يوجد قبلك <span class="text-amber-500 font-black text-2xl mx-1">${myPosition - 1}</span> أشخاص لليوم</span>`;
+      } else {
+         posHTML = `<span class="text-gray-500">جاري الحساب...</span>`;
+      }
 
       let warningCardHTML = '';
-      if (is10MinWarning && state.myTicket.presenceStatus !== 'here') {
+      if (is10MinWarning && isTimeClose && state.myTicket.presenceStatus !== 'here') {
         warningCardHTML = `
           <div id="warning-10min" class="bg-gradient-to-r from-amber-600 to-red-600 p-6 rounded-2xl shadow-2xl mb-6 border-2 border-white/20 animate-fade-in-down relative overflow-hidden">
              <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
@@ -1286,10 +1304,10 @@
                 </p>
                 <div class="flex gap-4 w-full md:w-auto">
                    <button data-action="customer-here" class="flex-1 md:flex-none bg-white text-red-700 hover:bg-gray-100 font-black px-6 py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
-                     <i data-lucide="check-circle" class="w-5 h-5"></i> أنا موجود بالصالون
+                     <i data-lucide="check-circle" class="w-5 h-5 pointer-events-none"></i> أنا موجود بالصالون
                    </button>
                    <button data-action="customer-delay" class="flex-1 md:flex-none bg-black/30 hover:bg-black/50 text-white font-bold px-6 py-3 rounded-xl border border-white/30 transition flex items-center justify-center gap-2">
-                     <i data-lucide="clock-4" class="w-5 h-5"></i> أخذ دور لاحق
+                     <i data-lucide="clock-4" class="w-5 h-5 pointer-events-none"></i> أخذ دور لاحق
                    </button>
                 </div>
              </div>
@@ -1333,7 +1351,7 @@
       let bookingInfo = (state.myTicket.bookingDate && state.myTicket.bookingTime) ? 
           `<div class="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-4 py-2 rounded-xl mb-6 font-bold flex flex-col sm:flex-row items-center justify-between gap-2">
              <span class="flex items-center gap-2"><i data-lucide="calendar-clock" class="w-5 h-5"></i> موعدك: ${state.myTicket.bookingDate} الساعة ${state.myTicket.bookingTime}</span>
-             <button data-action="customer-cancel-booking" class="bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg text-sm transition font-bold border border-red-500/30 flex items-center gap-1"><i data-lucide="x-circle" class="w-4 h-4"></i> إلغاء الحجز</button>
+             <button data-action="customer-cancel-booking" class="bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg text-sm transition font-bold border border-red-500/30 flex items-center gap-1"><i data-lucide="x-circle" class="w-4 h-4 pointer-events-none"></i> إلغاء الحجز</button>
            </div>` : '';
 
       htmlContent += `
@@ -1372,7 +1390,7 @@
 
         ${state.shopState.currentTicket > 0 ? `
           <div class="mt-6 p-8 rounded-3xl text-center border shadow-xl relative overflow-hidden transition-all duration-1000 ${isUrgentTimer ? 'bg-red-900/20 border-red-500/50 animate-pulse' : 'bg-gray-900 border-amber-500/30'}">
-            ${(myPosition === 1 && state.timeLeft > 0) ? `
+            ${(myPosition === 1 && state.timeLeft > 0 && isTimeClose) ? `
               <div class="absolute top-0 left-0 w-full bg-amber-500 text-gray-900 font-bold py-2 text-sm">
                 بإحترافية: يمكنك الانتظار حالياً في المكان، أمامك من الوقت تقريباً ليفرغ الكرسي:
               </div>
@@ -1398,11 +1416,63 @@
     };
 
     document.addEventListener('click', async (e) => {
-      let target = e.target.closest('button, i[data-action], div[data-action], tr[data-action]'); 
-      if (!target) return;
+      // Find element with data-action explicitly
+      let target = e.target.closest('[data-action]'); 
+      
+      if (!target) {
+         // Safeguard for specific ID buttons if click happened on their internal tags (icons, spans)
+         if (e.target.closest('#btn-role-customer')) {
+           state.role = 'customer';
+           updateViewVisibility();
+         }
+         else if (e.target.closest('#btn-role-admin')) {
+           const pwd = await customPassword("أدخل الرقم السري للإدارة (تيتو):");
+           if (pwd === ADMIN_PASSWORD) {
+              state.role = 'admin';
+              updateViewVisibility();
+           } else if (pwd !== null) {
+              customAlert("عذراً، الرقم السري غير صحيح!");
+           }
+         }
+         else if (e.target.closest('#btn-change-account') || e.target.closest('#btn-change-account-link')) {
+           const ok = await customConfirm("هل تريد العودة للرئيسية وتسجيل الخروج؟");
+           if(ok) {
+              state.role = null;
+              state.customerPhone = '';
+              state.customerName = '';
+              state.myTicket = null;
+              state.customerRecord = null;
+              state.showNewBookingForm = false;
+              state.tempBookingDate = '';
+              state.tempBookingTime = '';
+              try {
+                 if (window.location.protocol !== 'blob:' && window.location.origin !== 'null') {
+                    window.history.pushState({}, '', window.location.pathname); 
+                 }
+              } catch(e) { console.warn("URL update blocked by environment restrictions", e); }
+              updateViewVisibility();
+           }
+         }
+         return;
+      }
       
       const action = target.getAttribute('data-action');
       const shopRef = doc(db, 'artifacts', appId, 'public', 'data', 'shop', 'info');
+
+      if (action === 'logout-link') {
+         const ok = await customConfirm("هل تريد العودة للرئيسية وتسجيل الخروج؟");
+         if(ok) {
+            state.role = null;
+            state.customerPhone = '';
+            state.customerName = '';
+            state.myTicket = null;
+            state.customerRecord = null;
+            state.showNewBookingForm = false;
+            state.tempBookingDate = '';
+            state.tempBookingTime = '';
+            updateViewVisibility();
+         }
+      }
 
       // Admin Tab Switching & Filtering
       if (action === 'admin-switch-tab') {
@@ -1412,7 +1482,6 @@
       
       if (action === 'admin-select-date') {
          state.adminSelectedDate = target.getAttribute('data-val');
-         // Automatically switch to history tab if no waiting queue for that day to save time
          const allWaitingForDate = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
          if (allWaitingForDate.length === 0) {
              state.adminViewTab = 'completed';
@@ -1432,7 +1501,7 @@
       if (action === 'toggle-services-management') {
          state.showServicesManagement = !state.showServicesManagement;
          renderAdminPanel();
-         document.getElementById('quick-add-area').classList.remove('hidden'); // Keep modal open
+         document.getElementById('quick-add-area').classList.remove('hidden'); 
       }
 
       if (action === 'add-new-service') {
@@ -1476,7 +1545,7 @@
          const waitingQueue = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
          const targetIndex = waitingQueue.findIndex(q => q.id === id);
          
-         if (targetIndex > 0) { // Should not be already at top
+         if (targetIndex > 0) { 
             const topCust = waitingQueue[0];
             const thisCust = waitingQueue[targetIndex];
 
@@ -1539,8 +1608,9 @@
          }
       }
 
-      // --- Add Portfolio Gallery Image ---
+      // --- Add Portfolio Gallery Image for Customer ---
       if (action === 'trigger-portfolio-upload') {
+         state.uploadingForPhone = target.getAttribute('data-phone');
          document.getElementById('portfolio-file-input').click();
       }
 
@@ -1560,15 +1630,6 @@
       if (action === 'toggle-shop') {
         await updateDoc(shopRef, { isOpen: !state.shopState.isOpen });
       }
-      
-      if (action === 'save-hours') {
-         const st = document.getElementById('shop-start-time').value;
-         const en = document.getElementById('shop-end-time').value;
-         if (st && en) {
-            await updateDoc(shopRef, { workingHours: { start: st, end: en } });
-            customAlert("تم حفظ أوقات العمل بنجاح.");
-         }
-      }
 
       if (action === 'end-current' || action === 'end-and-next') {
         const activeTicket = state.queue.find(q => q.status === 'active');
@@ -1578,7 +1639,6 @@
            const custSnap = await getDoc(custRef);
            if (custSnap.exists()) {
               const data = custSnap.data();
-              // Only update firstVisitDate if it doesn't exist
               const updateData = {
                  visitCount: (data.visitCount || 1) + 1,
                  lastVisitDate: new Date().toISOString(),
@@ -1613,8 +1673,6 @@
       }
 
       if (action === 'toggle-details') {
-          if (e.target.closest('button[data-action]')) return;
-
           const id = target.getAttribute('data-id');
           const phone = target.getAttribute('data-phone');
           const detailsDiv = document.getElementById(`details-${id}`);
@@ -1657,7 +1715,7 @@
          const settings = document.getElementById('settings-area');
          if(el.classList.contains('hidden')) {
             el.classList.remove('hidden');
-            settings.classList.add('hidden'); // Close the other
+            settings.classList.add('hidden');
          }
          else el.classList.add('hidden');
       }
@@ -1667,7 +1725,7 @@
          const addArea = document.getElementById('quick-add-area');
          if(el.classList.contains('hidden')) {
             el.classList.remove('hidden');
-            addArea.classList.add('hidden'); // Close the other
+            addArea.classList.add('hidden');
          }
          else el.classList.add('hidden');
       }
@@ -1760,8 +1818,11 @@
             if(!ok) return;
         }
         
-        const ticketNum = state.shopState.nextTicketToIssue;
-        await updateDoc(shopRef, { nextTicketToIssue: ticketNum + 1 });
+        // --- Calculate Ticket Number For Specific Date ---
+        const queueForDate = state.queue.filter(q => q.bookingDate === dateInput);
+        const maxTicket = queueForDate.length > 0 ? Math.max(...queueForDate.map(q => q.ticketNumber || 0)) : 0;
+        const ticketNum = maxTicket + 1;
+
         await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'queue'), {
           phone: phoneInput,
           name: nameInput,
@@ -1839,15 +1900,17 @@
 
       if (action === 'customer-delay') {
          if(!state.myTicket) return;
-         const ok = await customConfirm("هل أنت متأكد من رغبتك في أخذ دور متأخر في آخر القائمة؟");
+         const ok = await customConfirm("هل أنت متأكد من رغبتك في أخذ دور متأخر في آخر القائمة لليوم نفسه؟");
          if(ok) {
-            const newTicketNum = state.shopState.nextTicketToIssue;
-            await updateDoc(shopRef, { nextTicketToIssue: newTicketNum + 1 });
+            const queueForDate = state.queue.filter(q => q.bookingDate === state.myTicket.bookingDate);
+            const maxTicket = queueForDate.length > 0 ? Math.max(...queueForDate.map(q => q.ticketNumber || 0)) : 0;
+            const newTicketNum = maxTicket + 1;
+
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', state.myTicket.id), { 
                 ticketNumber: newTicketNum,
                 presenceStatus: null 
             });
-            customAlert(`تم تأخير دورك. رقم دورك الجديد هو: ${newTicketNum}`);
+            customAlert(`تم تأخير دورك بنجاح. رقم دورك الجديد لليوم هو: ${newTicketNum}`);
          }
       }
 
@@ -1903,8 +1966,11 @@
             return;
         }
         
-        const ticketNum = state.shopState.nextTicketToIssue;
-        await updateDoc(shopRef, { nextTicketToIssue: ticketNum + 1 });
+        // --- Calculate Ticket Number For Specific Date ---
+        const queueForDate = state.queue.filter(q => q.bookingDate === bDate);
+        const maxTicket = queueForDate.length > 0 ? Math.max(...queueForDate.map(q => q.ticketNumber || 0)) : 0;
+        const ticketNum = maxTicket + 1;
+
         await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'queue'), {
           phone: state.customerPhone,
           name: state.customerName,
@@ -1919,7 +1985,6 @@
           timestamp: serverTimestamp()
         });
 
-        // Register customer in DB if new
         const custRef = doc(db, 'artifacts', appId, 'public', 'data', 'customers', state.customerPhone);
         const custSnap = await getDoc(custRef);
         if (!custSnap.exists()) {
@@ -1937,42 +2002,8 @@
         state.tempBookingTime = '';
         state.showNewBookingForm = false; 
       }
-
-      if (target.id === 'btn-role-customer') {
-        state.role = 'customer';
-        updateViewVisibility();
-      }
-      if (target.id === 'btn-role-admin') {
-        const pwd = await customPassword("أدخل الرقم السري للإدارة (تيتو):");
-        if (pwd === ADMIN_PASSWORD) {
-           state.role = 'admin';
-           updateViewVisibility();
-        } else if (pwd !== null) {
-           customAlert("عذراً، الرقم السري غير صحيح!");
-        }
-      }
-      if (target.id === 'btn-change-account') {
-        const ok = await customConfirm("هل تريد العودة للرئيسية وتسجيل الخروج؟");
-        if(ok) {
-           state.role = null;
-           state.customerPhone = '';
-           state.customerName = '';
-           state.myTicket = null;
-           state.customerRecord = null;
-           state.showNewBookingForm = false;
-           state.tempBookingDate = '';
-           state.tempBookingTime = '';
-           try {
-              if (window.location.protocol !== 'blob:' && window.location.origin !== 'null') {
-                 window.history.pushState({}, '', window.location.pathname); 
-              }
-           } catch(e) { console.warn("URL update blocked by environment restrictions", e); }
-           updateViewVisibility();
-        }
-      }
     });
 
-    // Handle Image uploads mapping to shared logic
     const handleImageUpload = (fileInput, progressElId, shopRef) => {
         const file = fileInput.files[0];
         if (!file) return;
@@ -1987,7 +2018,7 @@
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const MAX_WIDTH = 800; // Limit width to keep Base64 small
+                const MAX_WIDTH = 800; 
                 
                 if (width > MAX_WIDTH) {
                     height = Math.round(height * (MAX_WIDTH / width));
@@ -2017,17 +2048,61 @@
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
-    }
+    };
 
-    // Listener for specific hidden portfolio/gallery inputs
+    const handleCustomerImageUpload = (fileInput) => {
+        const file = fileInput.files[0];
+        const phone = state.uploadingForPhone;
+        if (!file || !phone) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX_WIDTH = 600; 
+                
+                if (width > MAX_WIDTH) {
+                    height = Math.round(height * (MAX_WIDTH / width));
+                    width = MAX_WIDTH;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+                
+                try {
+                    const custRef = doc(db, 'artifacts', appId, 'public', 'data', 'customers', phone);
+                    const custSnap = await getDoc(custRef);
+                    if(custSnap.exists()) {
+                       const d = custSnap.data();
+                       const newPhotos = [...(d.photos || []), dataUrl];
+                       await updateDoc(custRef, { photos: newPhotos });
+                       customAlert("تم رفع صورة العميل لكتالوجه الخاص بنجاح!");
+                    }
+                    fileInput.value = '';
+                } catch(error) {
+                    console.error("Firestore upload error", error);
+                    customAlert("حدث خطأ أثناء حفظ صورة العميل.");
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
     document.addEventListener('change', (e) => {
        const shopRef = doc(db, 'artifacts', appId, 'public', 'data', 'shop', 'info');
        if (e.target.id === 'input-new-gallery-file') {
           handleImageUpload(e.target, 'upload-progress', shopRef);
        }
        if (e.target.id === 'portfolio-file-input') {
-          // You could show a global progress spinner here, but we will reuse logic
-          handleImageUpload(e.target, null, shopRef);
+          handleCustomerImageUpload(e.target);
        }
     });
 
@@ -2071,7 +2146,6 @@
       }
     });
 
-    // DB Search handler & Month Filter
     document.addEventListener('input', (e) => {
        if(e.target.id === 'db-search-input') {
           renderAdminPanel();
@@ -2082,7 +2156,6 @@
        }
     });
 
-    // --- Application Initialization ---
     const initApp = async () => {
       lucide.createIcons();
 
@@ -2197,7 +2270,14 @@
          snapshot.forEach(doc => cData.push({ phone: doc.id, ...doc.data() }));
          cData.sort((a, b) => (b.visitCount || 0) - (a.visitCount || 0));
          state.customersDB = cData;
+         
+         if(state.customerPhone) {
+            const currentRec = cData.find(c => c.phone === state.customerPhone);
+            if(currentRec) state.customerRecord = currentRec;
+         }
+
          if(state.role === 'admin') renderAdminPanel();
+         if(state.role === 'customer' && state.showNewBookingForm === false && !state.myTicket) renderCustomerBooking(); 
       });
     };
 
