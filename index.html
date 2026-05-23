@@ -265,7 +265,7 @@
              <label class="block text-gray-400 mb-2 text-sm font-bold" id="label-customer-pin">الرقم السري الخاص بك</label>
              <div class="relative">
                <i data-lucide="lock" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-               <input type="password" id="input-customer-pin" required class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-center tracking-widest text-xl" placeholder="••••" />
+               <input type="password" id="input-customer-pin" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-center tracking-widest text-xl" placeholder="••••" />
              </div>
              <p class="text-xs text-gray-500 mt-2" id="hint-customer-pin"></p>
            </div>
@@ -405,7 +405,7 @@
     let state = {
       isMasterAdminMode: false,
       masterAdminLoggedIn: false,
-      allShops: [], // For Master Admin
+      allShops: [], 
 
       shopId: null, 
       isSubscriptionExpired: false,
@@ -436,6 +436,7 @@
       customerPhone: '',
       customerName: '', 
       customerRecord: null, 
+      tempCustomerPin: '', // للاحتفاظ بالرقم السري مؤقتاً
       myTicket: null,
       timeLeft: 0,
       selectedServices: [],
@@ -469,11 +470,29 @@
     };
 
     const copyToClipboard = (text) => {
-      navigator.clipboard.writeText(text).then(() => {
-        customAlert("تم نسخ الرابط بنجاح! يمكنك إرساله الآن.");
-      }).catch(err => {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+           customAlert("تم نسخ الرابط بنجاح! يمكنك إرساله الآن.");
+        } else {
+           customAlert("فشل النسخ، يرجى تحديد الرابط ونسخه يدوياً.");
+        }
+      } catch (err) {
         console.error('Could not copy text: ', err);
-      });
+        customAlert("فشل النسخ، يرجى نسخ الرابط يدوياً.");
+      }
     };
     window.copyToClipboard = copyToClipboard;
 
@@ -655,7 +674,6 @@
         return;
       }
 
-      // Master Admin Mode
       if (state.isMasterAdminMode) {
          if (!state.masterAdminLoggedIn) {
             views.masterLogin.classList.remove('hidden-view');
@@ -667,13 +685,11 @@
          return;
       }
 
-      // If no shopId is provided -> show SaaS platform registration
       if (!state.shopId) {
         views.saasLanding.classList.remove('hidden-view');
         return;
       }
 
-      // If subscription expired or shop deactivated -> block everything
       if (state.isSubscriptionExpired || !state.isShopActive) {
          views.subscriptionExpired.classList.remove('hidden-view');
          
@@ -687,7 +703,6 @@
          return;
       }
 
-      // We are inside a specific active shop
       document.getElementById('header-shop-name').innerHTML = `${state.shopState.shopName || state.shopId}`;
       document.getElementById('role-shop-name').innerHTML = `${state.shopState.shopName || state.shopId}`;
       document.getElementById('login-shop-title').innerHTML = `أهلاً بك في ${state.shopState.shopName || state.shopId}`;
@@ -785,7 +800,6 @@
            snapshot.forEach(doc => {
               shops.push({ id: doc.id, ...doc.data() });
            });
-           // Sort active first, then by name
            shops.sort((a, b) => {
               if (a.isActive === b.isActive) return a.shopName.localeCompare(b.shopName);
               return a.isActive ? -1 : 1;
@@ -1083,7 +1097,6 @@
                    <label class="block text-gray-400 text-xs font-bold mb-1.5">رقم الهاتف (اختياري)</label>
                    <input type="tel" id="admin-add-phone" value="${state.adminAdd.phone}" placeholder="010..." class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition" dir="ltr">
                  </div>
-                 <!-- PIN Field added for admin creation if phone is provided -->
                  <div>
                    <label class="block text-gray-400 text-xs font-bold mb-1.5">إنشاء رقم سري للعميل (اختياري)</label>
                    <input type="password" id="admin-add-pin" placeholder="••••" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition text-center tracking-widest">
@@ -1698,7 +1711,6 @@
        lucide.createIcons();
 
        try {
-          // التحقق من أن رابط العميل متاح
           const shopDocRef = doc(db, ROOT_COLLECTION, sSlug);
           const snap = await getDoc(shopDocRef);
           if (snap.exists()) {
@@ -1708,7 +1720,6 @@
              return;
           }
 
-          // التحقق من أن رقم الهاتف / البريد غير مستخدم مسبقاً
           const ownerQuery = query(collection(db, ROOT_COLLECTION), where('ownerId', '==', sOwnerId));
           const ownerDocs = await getDocs(ownerQuery);
           if (!ownerDocs.empty) {
@@ -1722,10 +1733,10 @@
           
           const newShopData = {
              shopName: sName,
-             ownerId: sOwnerId, // حساب الإدارة
+             ownerId: sOwnerId, 
              adminPin: sPin,
              subscriptionEnd: subscriptionEnd,
-             isActive: true, // تفعيل فورى للنسخة الجديدة
+             isActive: true, 
              isOpen: false,
              currentTicket: 0,
              nextTicketToIssue: 1,
@@ -1744,7 +1755,7 @@
           state.role = 'admin';
           state.shopState = { ...state.shopState, ...newShopData };
           
-          safeUpdateURL(); // يقوم بتوجيه الرابط للصالون مباشرة
+          safeUpdateURL(); 
           
           state.loading = true;
           updateViewVisibility();
@@ -1785,7 +1796,6 @@
                 }
              });
           } else {
-             // Fallback for legacy test accounts created via Shop ID directly
              const legacyDocRef = doc(db, ROOT_COLLECTION, sOwnerId);
              const legacySnap = await getDoc(legacyDocRef);
              if(legacySnap.exists() && legacySnap.data().adminPin === sPin) {
@@ -1795,7 +1805,6 @@
           }
 
           if (matchedDoc) {
-             // Successful Login
              state.shopId = matchedDoc.id;
              state.role = 'admin';
              state.shopState = { ...state.shopState, ...matchedData };
@@ -1833,7 +1842,6 @@
          document.getElementById('saas-login-container').classList.remove('hidden');
       }
 
-      // Master Admin Actions
       if (action === 'master-toggle-status') {
          const id = target.getAttribute('data-id');
          const isActive = target.getAttribute('data-active') === 'true';
@@ -1850,7 +1858,7 @@
             if(ok) {
                const msToAdd = months * 30 * 24 * 60 * 60 * 1000;
                let newEnd = shop.subscriptionEnd;
-               if(newEnd < Date.now()) newEnd = Date.now(); // If expired, start from today
+               if(newEnd < Date.now()) newEnd = Date.now(); 
                newEnd += msToAdd;
                await updateDoc(doc(db, ROOT_COLLECTION, id), { subscriptionEnd: newEnd, isActive: true });
                customAlert("تم تمديد الاشتراك بنجاح.");
@@ -1858,7 +1866,6 @@
          }
       }
 
-      // Shop Admin Actions
       if (action === 'admin-switch-tab') {
          state.adminViewTab = target.getAttribute('data-tab');
          renderAdminPanel();
@@ -2023,7 +2030,6 @@
               if(!data.firstVisitDate) updateData.firstVisitDate = new Date().toISOString();
               await updateDoc(custRef, updateData);
            } else {
-              // Create if didn't exist (e.g. added without pin originally)
               await setDoc(custRef, {
                  phone: activeTicket.phone, name: activeTicket.name, visitCount: 1, firstVisitDate: new Date().toISOString(), lastVisitDate: new Date().toISOString()
               });
@@ -2187,7 +2193,6 @@
             if (!custSnap.exists()) {
                 await setDoc(custRef, { phone: phoneInput, pin: pinInput, name: nameInput, visitCount: 0, firstVisitDate: new Date().toISOString(), lastVisitDate: new Date().toISOString() });
             } else if (pinInput) {
-               // Update PIN if provided by admin
                await updateDoc(custRef, { pin: pinInput });
             }
         }
@@ -2277,7 +2282,6 @@
           status: 'waiting', adminMessage: null, presenceStatus: null, selectedServices: state.selectedServices, selectedProducts: state.selectedProducts, timestamp: serverTimestamp()
         });
 
-        // Make sure record exists
         const custRef = doc(db, ROOT_COLLECTION, state.shopId, 'customers', state.customerPhone);
         const custSnap = await getDoc(custRef);
         if (!custSnap.exists()) {
@@ -2476,18 +2480,6 @@
       }
     });
 
-    document.getElementById('form-admin-login')?.addEventListener('submit', (e) => {
-       e.preventDefault();
-       const pin = document.getElementById('input-admin-pin').value;
-       if(pin === state.shopState.adminPin) {
-          state.role = 'admin';
-          state.showAdminLogin = false;
-          updateViewVisibility();
-       } else {
-          customAlert("عذراً، الرقم السري غير صحيح!");
-       }
-    });
-
     document.addEventListener('input', (e) => {
        if(e.target.id === 'db-search-input') renderAdminPanel();
        if (e.target.id === 'admin-month-filter') { state.adminSelectedMonth = e.target.value; renderAdminPanel(); }
@@ -2539,7 +2531,6 @@
       try {
         const shopSnap = await getDoc(shopRef);
         if (!shopSnap.exists()) {
-           // If shop doesn't exist in URL, throw to SaaS
            state.shopId = null;
            state.loading = false;
            updateViewVisibility();
@@ -2552,7 +2543,6 @@
         if (docSnap.exists()) {
           const data = docSnap.data();
           
-          // Check Subscription
           if (data.subscriptionEnd && data.subscriptionEnd < Date.now()) {
              state.isSubscriptionExpired = true;
           } else {
@@ -2660,3 +2650,6 @@
   </script>
 </body>
 </html>
+```
+
+الآن عند دخولك على رابط الصالون الخاص بك كعميل، والضغط على التحقق من الرقم، ستتم العملية بكل سلاسة وستظهر خانات التسجيل. بالتوفيق!
