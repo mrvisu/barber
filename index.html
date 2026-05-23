@@ -43,6 +43,7 @@
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 
+  <!-- Header -->
   <header id="main-header" class="bg-gray-900 border-b border-amber-500/20 shadow-lg p-4 sticky top-0 z-50 hidden-view">
     <div class="max-w-6xl mx-auto flex justify-between items-center">
       <div class="flex items-center gap-3">
@@ -67,89 +68,77 @@
 
     <!-- VIEW: SaaS Landing Page (Platform Home) -->
     <div id="view-saas-landing" class="hidden-view">
-      <div class="flex flex-col items-center justify-center p-4 min-h-[85vh]">
-        <div class="mb-8 text-center relative">
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-amber-500/20 blur-3xl rounded-full pointer-events-none"></div>
-          <i data-lucide="scissors" class="w-20 h-20 text-amber-500 mx-auto mb-4 relative z-10"></i>
-          <h1 class="text-4xl md:text-5xl font-black text-white tracking-wider uppercase relative z-10 mb-2">منصة الصالونات</h1>
-          <p class="text-amber-400 text-lg font-bold relative z-10">نظام الإدارة والحجوزات الذكي</p>
+      <div class="flex flex-col items-center justify-center p-4">
+        <div class="mb-12 text-center relative">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-blue-500/20 blur-3xl rounded-full pointer-events-none"></div>
+          <i data-lucide="layout-dashboard" class="w-24 h-24 text-blue-500 mx-auto mb-4 relative z-10"></i>
+          <h1 class="text-5xl font-black text-white tracking-wider uppercase relative z-10 mb-2">Barber SaaS</h1>
+          <p class="text-blue-400 text-lg font-bold relative z-10">المنصة المتكاملة لإدارة الصالونات والحجوزات</p>
         </div>
 
-        <!-- LOGIN CONTAINER -->
-        <div id="saas-login-container" class="bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl max-w-md w-full relative z-10">
-           <h2 class="text-2xl font-bold text-white mb-6 text-center">تسجيل دخول أصحاب الصالونات</h2>
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl max-w-lg w-full relative z-10">
+           <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2 border-b border-gray-800 pb-4"><i data-lucide="store" class="text-blue-500"></i> تسجيل دخول / صالون جديد</h2>
            
            <form id="form-saas-login" class="space-y-5">
               <div>
-                 <label class="block text-gray-400 text-sm font-bold mb-2">رقم الهاتف أو البريد الإلكتروني</label>
+                 <label class="block text-gray-400 text-sm font-bold mb-2">رقم الهاتف أو البريد (حساب صاحب الصالون)</label>
                  <div class="relative">
-                   <i data-lucide="user" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-                   <input type="text" id="login-owner-id" placeholder="مثال: 01012345678 أو gmail" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 pr-12 pl-4 text-white focus:border-blue-500 outline-none transition text-left font-mono" dir="ltr" required>
+                   <i data-lucide="user" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
+                   <input type="text" id="login-owner-id" placeholder="مثال: 01012345678" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 pr-10 pl-3 text-white focus:border-blue-500 outline-none transition text-left font-mono" dir="ltr" required>
                  </div>
               </div>
               <div>
                  <label class="block text-gray-400 text-sm font-bold mb-2">الرقم السري للإدارة (PIN)</label>
                  <div class="relative">
-                   <i data-lucide="key" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-                   <input type="password" id="login-owner-pin" placeholder="••••" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 pr-12 pl-4 text-white focus:border-blue-500 outline-none transition text-center tracking-widest text-lg" required>
+                   <i data-lucide="key" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
+                   <input type="password" id="login-owner-pin" placeholder="••••" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 pr-10 pl-3 text-white focus:border-blue-500 outline-none transition text-center tracking-widest text-lg" required>
                  </div>
               </div>
-              
-              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-4 rounded-xl transition shadow-[0_0_15px_rgba(37,99,235,0.3)] flex items-center justify-center gap-2 mt-4">
-                دخول للوحة التحكم <i data-lucide="log-in" class="w-5 h-5"></i>
+              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-4 rounded-xl transition shadow-[0_0_15px_rgba(37,99,235,0.3)] flex items-center justify-center gap-2">
+                دخول للإدارة <i data-lucide="log-in" class="w-5 h-5"></i>
               </button>
            </form>
-           
+
            <div class="mt-6 pt-6 border-t border-gray-800 text-center">
-              <p class="text-gray-400 text-sm mb-3">ليس لديك حساب؟</p>
+              <p class="text-gray-400 text-sm mb-3">ليس لديك حساب كصاحب صالون؟</p>
               <button data-action="show-saas-register" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl border border-gray-700 transition">
                  تسجيل صالون جديد (تجربة مجانية)
               </button>
            </div>
         </div>
 
-        <!-- REGISTER CONTAINER -->
-        <div id="saas-register-container" class="hidden bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl max-w-lg w-full relative z-10 animate-fade-in-down">
-           <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2 border-b border-gray-800 pb-4"><i data-lucide="store" class="text-blue-500"></i> تسجيل صالون جديد</h2>
-           
+        <div id="saas-register-container" class="hidden bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl max-w-lg w-full relative z-10 animate-fade-in-down mt-4">
            <form id="form-create-shop" class="space-y-5">
               <div>
                  <label class="block text-gray-400 text-sm font-bold mb-2">اسم الصالون (بالعربية)</label>
                  <input type="text" id="saas-shop-name" placeholder="مثال: صالون المقص الذهبي" class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition" required>
               </div>
               <div>
-                 <label class="block text-gray-400 text-sm font-bold mb-2">رقم الهاتف أو البريد (حساب الدخول الأساسي)</label>
+                 <label class="block text-gray-400 text-sm font-bold mb-2">رقم الهاتف (حساب الدخول الأساسي)</label>
                  <div class="relative">
-                   <i data-lucide="user" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4"></i>
-                   <input type="text" id="saas-owner-id" placeholder="مثال: 01012345678" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 pr-10 pl-3 text-white focus:border-blue-500 outline-none transition text-left" dir="ltr" required>
+                   <input type="text" id="saas-owner-id" placeholder="مثال: 01012345678" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-3 px-3 text-white focus:border-blue-500 outline-none transition text-left" dir="ltr" required>
                  </div>
               </div>
               <div>
                  <label class="block text-gray-400 text-sm font-bold mb-2">رابط الصالون المخصص (لإرساله للعملاء)</label>
                  <div class="flex items-center gap-2" dir="ltr">
-                    <span class="text-gray-500 text-sm hidden sm:inline">yoursite.com/?shop=</span>
+                    <span class="text-gray-500 text-sm hidden sm:inline">?shop=</span>
                     <input type="text" id="saas-shop-slug" placeholder="golden-scissors" class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition text-left font-mono text-sm" pattern="[a-zA-Z0-9-]+" title="حروف انجليزية وأرقام وشرطة فقط" required>
                  </div>
-                 <p class="text-xs text-gray-500 mt-1 text-right">أحرف إنجليزية وأرقام فقط. مثال: barbershop-1</p>
               </div>
               <div>
-                 <label class="block text-gray-400 text-sm font-bold mb-2">الرقم السري للإدارة (كلمة المرور)</label>
-                 <input type="password" id="saas-shop-pin" placeholder="••••" class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition text-center tracking-widest text-lg" required>
-              </div>
-              
-              <div class="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl text-blue-400 text-sm mb-6 flex items-start gap-2">
-                 <i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5"></i>
-                 <p>عند إنشاء صالونك ستحصل على فترة تجريبية مجانية لمدة 14 يوم بجميع الصلاحيات.</p>
+                 <label class="block text-gray-400 text-sm font-bold mb-2">الرقم السري للإدارة (للدخول لاحقاً)</label>
+                 <input type="password" id="saas-shop-pin-reg" placeholder="••••" class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition text-center tracking-widest text-lg" required>
               </div>
 
-              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-4 rounded-xl transition shadow-[0_0_15px_rgba(37,99,235,0.3)] flex items-center justify-center gap-2">
-                إنشاء النظام للصالون الآن <i data-lucide="arrow-left" class="w-5 h-5"></i>
+              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-4 rounded-xl transition flex items-center justify-center gap-2">
+                إنشاء الصالون الآن <i data-lucide="check" class="w-5 h-5"></i>
               </button>
            </form>
            
-           <div class="mt-6 pt-6 border-t border-gray-800 text-center">
-              <button data-action="show-saas-login" class="text-gray-400 hover:text-white font-bold text-sm transition flex items-center justify-center gap-2 w-full">
-                 <i data-lucide="arrow-right" class="w-4 h-4"></i> العودة لتسجيل الدخول
+           <div class="mt-4 pt-4 border-t border-gray-800 text-center">
+              <button data-action="hide-saas-register" class="text-gray-400 hover:text-white font-bold text-sm transition">
+                 العودة لتسجيل الدخول
               </button>
            </div>
         </div>
@@ -161,70 +150,8 @@
        <div class="w-32 h-32 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
           <i data-lucide="lock" class="w-16 h-16 text-red-500"></i>
        </div>
-       <h1 class="text-4xl font-black text-white mb-4" id="expired-title">انتهى اشتراك الصالون</h1>
-       <p class="text-gray-400 text-lg mb-8 max-w-md" id="expired-msg">عفواً، لقد انتهت فترة اشتراك هذا الصالون أو تم إيقافه. يرجى التواصل مع الإدارة المركزية لتجديد الاشتراك.</p>
-       <button onclick="window.location.href='index.html'" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-xl border border-gray-700 transition">العودة للصفحة الرئيسية</button>
-    </div>
-
-    <!-- VIEW: Role Selection (For a specific shop) -->
-    <div id="view-role-select" class="hidden-view">
-      <div class="flex flex-col items-center justify-center p-4">
-        <div class="mb-12 text-center relative">
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-amber-500/20 blur-3xl rounded-full"></div>
-          <i data-lucide="scissors" class="w-20 h-20 text-amber-500 mx-auto mb-4 relative z-10"></i>
-          <h1 class="text-5xl font-black text-white tracking-wider uppercase relative z-10" id="role-shop-name">صالون</h1>
-          <p class="text-amber-500 tracking-[0.3em] text-sm mt-2 font-bold relative z-10">BARBER SHOP</p>
-        </div>
-        <div id="overall-rating-display" class="mb-8 text-center bg-gray-900 border border-gray-800 px-6 py-3 rounded-full flex items-center gap-3 shadow-lg">
-           <!-- Dynamic Rating -->
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl" id="role-cards-container">
-          <button id="btn-role-customer" class="group relative bg-gray-900 border border-gray-800 hover:border-amber-500/50 rounded-3xl p-8 transition-all hover:transform hover:-translate-y-1 overflow-hidden text-right block w-full mx-auto">
-            <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <i data-lucide="user" class="w-12 h-12 text-gray-400 group-hover:text-amber-500 mb-6 transition-colors pointer-events-none"></i>
-            <h2 class="text-2xl font-bold text-white mb-2 pointer-events-none">دخول العميل</h2>
-            <p class="text-gray-500 text-sm pointer-events-none">حجز دور، تحديد الخدمات المطلوبة، ومتابعة العداد التنازلي للصالون.</p>
-            <div class="mt-6 flex justify-end pointer-events-none">
-              <i data-lucide="chevron-right" class="w-6 h-6 text-amber-500 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all"></i>
-            </div>
-          </button>
-          <button id="btn-role-admin" class="group relative bg-gray-900 border border-gray-800 hover:border-amber-500/50 rounded-3xl p-8 transition-all hover:transform hover:-translate-y-1 overflow-hidden text-right block w-full">
-            <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <i data-lucide="settings" class="w-12 h-12 text-gray-400 group-hover:text-amber-500 mb-6 transition-colors pointer-events-none"></i>
-            <h2 class="text-2xl font-bold text-white mb-2 pointer-events-none">دخول الإدارة</h2>
-            <p class="text-gray-500 text-sm pointer-events-none">التحكم في الطابور، إضافة عملاء، ضبط العداد التنازلي وتأكيد الحضور.</p>
-            <div class="mt-6 flex justify-end pointer-events-none">
-              <i data-lucide="chevron-right" class="w-6 h-6 text-amber-500 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all"></i>
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- VIEW: Admin Login -->
-    <div id="view-admin-login" class="hidden-view max-w-md mx-auto mt-12 bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-800 animate-fade-in-down">
-      <div class="text-center mb-8">
-        <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
-           <i data-lucide="lock" class="w-10 h-10 text-amber-500"></i>
-        </div>
-        <h2 class="text-3xl font-black text-white mb-2">تسجيل الدخول</h2>
-        <p class="text-gray-400">لوحة تحكم إدارة <span class="text-amber-500 font-bold" id="admin-login-shop-name"></span></p>
-      </div>
-      <form id="form-admin-login" class="space-y-6">
-        <div>
-          <label class="block text-gray-400 mb-2 text-sm font-bold">الرقم السري للإدارة (PIN)</label>
-          <div class="relative">
-            <i data-lucide="key" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-            <input type="password" id="input-admin-pin" required class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-center tracking-[0.5em] text-2xl font-black" placeholder="••••" />
-          </div>
-        </div>
-        <div class="flex gap-4 pt-2">
-           <button type="button" data-action="back-to-roles" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 rounded-xl transition border border-gray-700 shadow-sm">رجوع</button>
-           <button type="submit" class="flex-[2] bg-amber-500 hover:bg-amber-400 text-gray-900 font-black text-lg py-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2">
-             دخول <i data-lucide="arrow-left" class="w-5 h-5"></i>
-           </button>
-        </div>
-      </form>
+       <h1 class="text-4xl font-black text-white mb-4">انتهى اشتراك الصالون</h1>
+       <p class="text-gray-400 text-lg mb-8 max-w-md">عفواً، لقد انتهت فترة اشتراك هذا الصالون. يرجى التواصل مع الإدارة لتجديد الاشتراك.</p>
     </div>
 
     <!-- VIEW: Admin Panel -->
@@ -233,14 +160,14 @@
       <input type="file" id="portfolio-file-input" accept="image/*" class="hidden" />
     </div>
 
-    <!-- VIEW: Customer Login -->
+    <!-- VIEW: Customer Login (Cleaned Up - No PIN) -->
     <div id="view-customer-login" class="hidden-view max-w-md mx-auto mt-12 bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-800 animate-fade-in-down">
       <div class="text-center mb-8">
         <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
            <i data-lucide="user" class="w-10 h-10 text-amber-500"></i>
         </div>
         <h2 class="text-3xl font-bold text-white mb-2" id="login-shop-title">أهلاً بك</h2>
-        <p id="login-instruction-text" class="text-gray-400">قم بإدخال رقم هاتفك للمتابعة.</p>
+        <p id="login-instruction-text" class="text-gray-400">قم بإدخال رقم هاتفك للتعرف عليك أو حجز موعد جديد.</p>
       </div>
       
       <form id="form-customer-login" class="space-y-6">
@@ -252,7 +179,7 @@
           </div>
         </div>
         
-        <div id="customer-auth-section" class="hidden transition-all duration-500 opacity-0 h-0 overflow-hidden space-y-6">
+        <div id="customer-auth-section" class="hidden transition-all duration-500 opacity-0 h-0 overflow-hidden">
            <div id="name-input-wrapper" class="hidden">
              <label class="block text-gray-400 mb-2 text-sm font-bold">الاسم الكريم (لأول مرة)</label>
              <div class="relative">
@@ -260,19 +187,10 @@
                <input type="text" id="input-customer-name" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-right text-lg" placeholder="أدخل اسمك..." />
              </div>
            </div>
-           
-           <div>
-             <label class="block text-gray-400 mb-2 text-sm font-bold" id="label-customer-pin">الرقم السري الخاص بك</label>
-             <div class="relative">
-               <i data-lucide="lock" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-               <input type="password" id="input-customer-pin" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-center tracking-widest text-xl" placeholder="••••" />
-             </div>
-             <p class="text-xs text-gray-500 mt-2" id="hint-customer-pin"></p>
-           </div>
         </div>
 
         <button id="btn-login-submit" type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold text-lg py-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2">
-          تحقق من الرقم <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          متابعة <i data-lucide="arrow-left" class="w-5 h-5"></i>
         </button>
       </form>
     </div>
@@ -379,6 +297,39 @@
     const customConfirm = (msg) => showModal({ type: 'confirm', message: msg, iconName: 'help-circle', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'نعم، متأكد' });
     const customPrompt = (msg, def = '') => showModal({ type: 'prompt', message: msg, defaultValue: def, iconName: 'edit-3', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'حفظ' });
     
+    const showCustomerDetailsModal = (customer) => {
+      const firstVisit = customer.firstVisitDate ? new Date(customer.firstVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
+      const lastVisit = customer.lastVisitDate ? new Date(customer.lastVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
+      const visitCount = customer.visitCount || 0;
+      
+      const htmlContent = `
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+          <div class="flex items-center gap-3 border-b border-gray-700 pb-3 mb-3">
+            <div class="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center font-bold text-xl">
+              ${customer.name ? customer.name.charAt(0) : '?'}
+            </div>
+            <div>
+               <div class="font-bold text-white text-lg">${customer.name || 'بدون اسم'}</div>
+               <div class="text-gray-400 font-mono text-sm" dir="ltr">${customer.phone}</div>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between"><span class="text-gray-500">إجمالي الزيارات:</span> <span class="font-bold text-amber-500">${visitCount} زيارة</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">تاريخ أول زيارة:</span> <span class="text-white">${firstVisit}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">تاريخ آخر زيارة:</span> <span class="text-white">${lastVisit}</span></div>
+          </div>
+          <div class="mt-4 flex gap-2">
+             <a href="https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}" target="_blank" class="flex-1 bg-green-600 hover:bg-green-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
+             <a href="tel:${customer.phone}" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="phone" class="w-4 h-4"></i> اتصال</a>
+          </div>
+        </div>
+      `;
+      showModal({ 
+        type: 'alert', title: 'تفاصيل العميل', iconName: 'user', iconBgClass: 'bg-gray-800 text-gray-300', htmlContent: htmlContent, confirmText: 'إغلاق'
+      });
+    };
+
+    // --- Firebase Setup ---
     const firebaseConfig = {
       apiKey: "AIzaSyCI0L2fO4_bdltYF7Hddjcxa6seSDbrMwc",
       authDomain: "studio-noot.firebaseapp.com",
@@ -394,7 +345,6 @@
     const db = getFirestore(app);
     
     const ROOT_COLLECTION = 'saas_shops';
-    const MASTER_ADMIN_PIN = '123456'; // Default PIN for Master Admin (Platform Owner)
 
     const DEFAULT_GALLERY = [
        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=80",
@@ -402,23 +352,17 @@
        "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=80"
     ];
 
+    // --- App State ---
     let state = {
-      isMasterAdminMode: false,
-      masterAdminLoggedIn: false,
-      allShops: [], 
-
       shopId: null, 
       isSubscriptionExpired: false,
-      isShopActive: true,
       user: null,
-      role: null,
+      role: null, // 'admin' or 'customer'
       loading: true,
-      
       shopState: {
         shopName: '',
         adminPin: '',
         subscriptionEnd: 0,
-        isActive: true,
         isOpen: false,
         currentTicket: 0,
         nextTicketToIssue: 1,
@@ -430,13 +374,11 @@
         products: ["جيل تصفيف", "كريم شعر", "زيت لحية"],
         gallery: DEFAULT_GALLERY
       },
-      
       queue: [],
       customersDB: [], 
       customerPhone: '',
       customerName: '', 
       customerRecord: null, 
-      tempCustomerPin: '', // للاحتفاظ بالرقم السري مؤقتاً
       myTicket: null,
       timeLeft: 0,
       selectedServices: [],
@@ -444,12 +386,10 @@
       showNewBookingForm: false,
       tempBookingDate: '', 
       tempBookingTime: '',
-      showAdminLogin: false,
       
       adminSelectedDate: new Date().toISOString().split('T')[0],
       adminSelectedMonth: new Date().toISOString().slice(0, 7),
       adminViewTab: 'waiting',
-      
       adminAdd: { name: '', phone: '', date: '', time: '', services: [], products: [] }
     };
 
@@ -458,7 +398,6 @@
     let unsubShop = null;
     let unsubQueue = null;
     let unsubCustomers = null;
-    let unsubMasterAllShops = null;
 
     const formatTime = (milliseconds) => {
       if (milliseconds <= 0) return "00:00:00";
@@ -485,7 +424,7 @@
         document.body.removeChild(textArea);
         
         if (successful) {
-           customAlert("تم نسخ الرابط بنجاح! يمكنك إرساله الآن.");
+           customAlert("تم نسخ الرابط بنجاح! يمكنك إرساله الآن للعملاء.");
         } else {
            customAlert("فشل النسخ، يرجى تحديد الرابط ونسخه يدوياً.");
         }
@@ -611,30 +550,31 @@
          timeEl.disabled = !dateEl.value;
          if (state.tempBookingTime) timeEl.value = state.tempBookingTime;
       }
+
+      const adminDateEl = document.getElementById('admin-add-date');
+      const adminTimeEl = document.getElementById('admin-add-time');
+      if(adminDateEl && adminTimeEl) {
+         adminTimeEl.innerHTML = getAvailableTimesHTML(adminDateEl.value);
+         if(state.adminAdd.time) adminTimeEl.value = state.adminAdd.time;
+      }
     };
 
-    const safeUpdateURL = () => {
-      try {
-        if (window.location.protocol === 'blob:' || window.location.origin === 'null') return;
-        const url = new URL(window.location);
-        
-        if (state.shopId) {
-            url.searchParams.set('shop', state.shopId);
-        } else {
-            url.searchParams.delete('shop');
-        }
-        
-        if (state.customerPhone) {
-            url.searchParams.set('phone', state.customerPhone);
-            if(state.customerName) url.searchParams.set('name', state.customerName);
-        } else {
-            url.searchParams.delete('phone');
-            url.searchParams.delete('name');
-        }
-        
-        window.history.pushState({}, '', url);
-      } catch(e) {
-        console.warn("History API safely blocked in preview environment:", e);
+    const updateURLWithPhone = () => {
+      if(state.shopId) {
+        try {
+          const url = new URL(window.location);
+          if (url.protocol !== 'blob:' && url.origin !== 'null') {
+             url.searchParams.set('shop', state.shopId);
+             if(state.customerPhone) {
+                 url.searchParams.set('phone', state.customerPhone);
+                 if(state.customerName) url.searchParams.set('name', state.customerName);
+             } else {
+                 url.searchParams.delete('phone');
+                 url.searchParams.delete('name');
+             }
+             window.history.pushState({}, '', url);
+          }
+        } catch(e) {}
       }
     };
 
@@ -655,14 +595,10 @@
         loading: document.getElementById('view-loading'),
         saasLanding: document.getElementById('view-saas-landing'),
         subscriptionExpired: document.getElementById('view-subscription-expired'),
-        roleSelect: document.getElementById('view-role-select'),
-        adminLogin: document.getElementById('view-admin-login'),
         admin: document.getElementById('view-admin'),
         customerLogin: document.getElementById('view-customer-login'),
         customerBooking: document.getElementById('view-customer-booking'),
-        customerDashboard: document.getElementById('view-customer-dashboard'),
-        masterLogin: document.getElementById('view-master-login'),
-        masterDashboard: document.getElementById('view-master-dashboard')
+        customerDashboard: document.getElementById('view-customer-dashboard')
       };
       const header = document.getElementById('main-header');
 
@@ -674,174 +610,45 @@
         return;
       }
 
-      if (state.isMasterAdminMode) {
-         if (!state.masterAdminLoggedIn) {
-            views.masterLogin.classList.remove('hidden-view');
-         } else {
-            views.masterDashboard.classList.remove('hidden-view');
-            renderMasterDashboard();
-         }
-         lucide.createIcons();
-         return;
-      }
-
+      // If no shopId is provided -> show SaaS platform registration
       if (!state.shopId) {
         views.saasLanding.classList.remove('hidden-view');
         return;
       }
 
-      if (state.isSubscriptionExpired || !state.isShopActive) {
+      // If subscription expired -> block everything
+      if (state.isSubscriptionExpired) {
          views.subscriptionExpired.classList.remove('hidden-view');
-         
-         if(!state.isShopActive) {
-            document.getElementById('expired-title').innerText = "تم إيقاف الصالون";
-            document.getElementById('expired-msg').innerText = "تم إيقاف حساب هذا الصالون مؤقتاً من قبل الإدارة المركزية.";
-         } else {
-            document.getElementById('expired-title').innerText = "انتهى اشتراك الصالون";
-            document.getElementById('expired-msg').innerText = "عفواً، لقد انتهت فترة اشتراك هذا الصالون. يرجى التواصل لتجديد الاشتراك.";
-         }
          return;
       }
 
+      // We are inside a specific shop
       document.getElementById('header-shop-name').innerHTML = `${state.shopState.shopName || state.shopId}`;
-      document.getElementById('role-shop-name').innerHTML = `${state.shopState.shopName || state.shopId}`;
       document.getElementById('login-shop-title').innerHTML = `أهلاً بك في ${state.shopState.shopName || state.shopId}`;
-      const adminLoginShopName = document.getElementById('admin-login-shop-name');
-      if(adminLoginShopName) adminLoginShopName.innerHTML = state.shopState.shopName || state.shopId;
 
+      // Default role to customer if not admin logged in
       if (!state.role) {
-        if(state.showAdminLogin) {
-           views.adminLogin.classList.remove('hidden-view');
+         state.role = 'customer';
+      }
+
+      header.classList.remove('hidden-view');
+      
+      if (state.role === 'admin') {
+        views.admin.classList.remove('hidden-view');
+        renderAdminPanel();
+      } else if (state.role === 'customer') {
+        if (!state.customerPhone) {
+          views.customerLogin.classList.remove('hidden-view');
+        } else if (!state.myTicket) {
+          views.customerBooking.classList.remove('hidden-view');
+          renderCustomerBooking();
         } else {
-           views.roleSelect.classList.remove('hidden-view');
-           const avg = state.shopState.totalRatings > 0 ? (state.shopState.ratingSum / state.shopState.totalRatings).toFixed(1) : '5.0';
-           const ratCnt = state.shopState.totalRatings || 0;
-           document.getElementById('overall-rating-display').innerHTML = `
-              <div class="flex text-amber-500"><i data-lucide="star" class="fill-current w-5 h-5"></i></div>
-              <div class="text-white font-bold"><span class="text-lg">${avg}</span> <span class="text-gray-400 text-sm">(${ratCnt} تقييم)</span></div>
-           `;
-        }
-      } else {
-        header.classList.remove('hidden-view');
-        if (state.role === 'admin') {
-          views.admin.classList.remove('hidden-view');
-          renderAdminPanel();
-        } else if (state.role === 'customer') {
-          if (!state.customerPhone) {
-            views.customerLogin.classList.remove('hidden-view');
-          } else if (!state.myTicket) {
-            views.customerBooking.classList.remove('hidden-view');
-            renderCustomerBooking();
-          } else {
-            views.customerDashboard.classList.remove('hidden-view');
-            renderCustomerDashboard();
-            safeUpdateURL();
-          }
+          views.customerDashboard.classList.remove('hidden-view');
+          renderCustomerDashboard();
+          updateURLWithPhone();
         }
       }
       lucide.createIcons();
-    };
-
-    const renderMasterDashboard = () => {
-       const tbody = document.getElementById('master-shops-list');
-       if(!tbody) return;
-
-       if(state.allShops.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500 font-bold">لا يوجد صالونات مسجلة حتى الآن.</td></tr>`;
-          return;
-       }
-
-       let html = '';
-       state.allShops.forEach(shop => {
-          const isExp = shop.subscriptionEnd < Date.now();
-          const statusHtml = !shop.isActive ? 
-             `<span class="bg-red-500/20 text-red-500 px-3 py-1 rounded-full text-xs font-bold border border-red-500/30">موقوف</span>` :
-             (isExp ? `<span class="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-xs font-bold border border-amber-500/30">منتهي</span>` : 
-                     `<span class="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-bold border border-green-500/30">نشط</span>`);
-
-          const expDate = new Date(shop.subscriptionEnd).toLocaleDateString('ar-EG');
-          const baseUrl = window.location.origin + window.location.pathname;
-          const shopUrl = `${baseUrl}?shop=${shop.id}`;
-
-          html += `
-             <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
-                <td class="p-4">
-                   <div class="font-bold text-white text-lg">${shop.shopName}</div>
-                   <a href="${shopUrl}" target="_blank" class="text-indigo-400 text-xs font-mono mt-1 flex items-center gap-1 hover:underline dir-ltr justify-end w-fit" dir="ltr">
-                      ${shop.id} <i data-lucide="external-link" class="w-3 h-3"></i>
-                   </a>
-                </td>
-                <td class="p-4 text-center font-mono text-gray-400 tracking-widest">${shop.adminPin}</td>
-                <td class="p-4 text-center ${isExp ? 'text-amber-500 font-bold' : 'text-gray-300'}">${expDate}</td>
-                <td class="p-4 text-center">${statusHtml}</td>
-                <td class="p-4">
-                   <div class="flex justify-center gap-2">
-                      <button data-action="master-extend" data-id="${shop.id}" data-months="1" class="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white px-2 py-1.5 rounded-lg text-xs font-bold transition border border-indigo-500/30">+ شهر</button>
-                      <button data-action="master-extend" data-id="${shop.id}" data-months="6" class="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white px-2 py-1.5 rounded-lg text-xs font-bold transition border border-indigo-500/30">+ 6 أشهر</button>
-                      <button data-action="master-extend" data-id="${shop.id}" data-months="12" class="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white px-2 py-1.5 rounded-lg text-xs font-bold transition border border-indigo-500/30">+ سنة</button>
-                   </div>
-                </td>
-                <td class="p-4">
-                   <button data-action="master-toggle-status" data-id="${shop.id}" data-active="${shop.isActive}" class="${shop.isActive ? 'bg-red-500/20 text-red-500 hover:bg-red-500 border-red-500/30' : 'bg-green-500/20 text-green-500 hover:bg-green-500 border-green-500/30'} hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition border flex items-center gap-1 mx-auto">
-                      <i data-lucide="${shop.isActive ? 'power-off' : 'power'}" class="w-4 h-4"></i>
-                      ${shop.isActive ? 'إيقاف' : 'تفعيل'}
-                   </button>
-                </td>
-             </tr>
-          `;
-       });
-       tbody.innerHTML = html;
-       lucide.createIcons();
-    };
-
-    const setupMasterListeners = () => {
-       if(unsubMasterAllShops) unsubMasterAllShops();
-       unsubMasterAllShops = onSnapshot(collection(db, ROOT_COLLECTION), (snapshot) => {
-           const shops = [];
-           snapshot.forEach(doc => {
-              shops.push({ id: doc.id, ...doc.data() });
-           });
-           shops.sort((a, b) => {
-              if (a.isActive === b.isActive) return a.shopName.localeCompare(b.shopName);
-              return a.isActive ? -1 : 1;
-           });
-           state.allShops = shops;
-           if(state.isMasterAdminMode && state.masterAdminLoggedIn) {
-              renderMasterDashboard();
-           }
-       });
-    };
-
-    const showCustomerDetailsModal = (customer) => {
-      const firstVisit = customer.firstVisitDate ? new Date(customer.firstVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
-      const lastVisit = customer.lastVisitDate ? new Date(customer.lastVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
-      const visitCount = customer.visitCount || 0;
-      
-      const htmlContent = `
-        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-          <div class="flex items-center gap-3 border-b border-gray-700 pb-3 mb-3">
-            <div class="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center font-bold text-xl">
-              ${customer.name ? customer.name.charAt(0) : '?'}
-            </div>
-            <div>
-               <div class="font-bold text-white text-lg">${customer.name || 'بدون اسم'}</div>
-               <div class="text-gray-400 font-mono text-sm" dir="ltr">${customer.phone}</div>
-            </div>
-          </div>
-          <div class="space-y-2">
-            <div class="flex justify-between"><span class="text-gray-500">إجمالي الزيارات:</span> <span class="font-bold text-amber-500">${visitCount} زيارة</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">تاريخ أول زيارة:</span> <span class="text-white">${firstVisit}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">تاريخ آخر زيارة:</span> <span class="text-white">${lastVisit}</span></div>
-          </div>
-          <div class="mt-4 flex gap-2">
-             <a href="https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}" target="_blank" class="flex-1 bg-green-600 hover:bg-green-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
-             <a href="tel:${customer.phone}" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="phone" class="w-4 h-4"></i> اتصال</a>
-          </div>
-        </div>
-      `;
-      showModal({ 
-        type: 'alert', title: 'تفاصيل العميل', iconName: 'user', iconBgClass: 'bg-gray-800 text-gray-300', htmlContent: htmlContent, confirmText: 'إغلاق'
-      });
     };
 
     const renderAdminPanel = () => {
@@ -1049,7 +856,7 @@
       }
 
       const baseUrl = window.location.origin + window.location.pathname;
-      const customerLink = `${baseUrl}?shop=${state.shopId}&role=customer`;
+      const customerLink = `${baseUrl}?shop=${state.shopId}`;
 
       container.innerHTML = `
         <div class="bg-indigo-500/10 border border-indigo-500/30 p-5 rounded-3xl mb-6 flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg relative overflow-hidden animate-fade-in-down">
@@ -1084,7 +891,6 @@
            </div>
         </div>
 
-        <!-- QUICK ADD CUSTOMER AREA -->
         <div id="quick-add-area" class="hidden mb-6 bg-gray-900 rounded-3xl p-6 md:p-8 border border-amber-500/30 shadow-2xl animate-fade-in-down relative z-20">
            <button data-action="toggle-admin-add-modal" class="absolute top-4 left-4 text-gray-500 hover:text-white bg-gray-800 p-2 rounded-xl transition"><i data-lucide="x" class="w-5 h-5"></i></button>
            <h3 class="text-xl font-black text-white mb-6 flex items-center gap-2"><i data-lucide="user-plus" class="w-6 h-6 text-amber-500"></i> إضافة عميل مباشر بالصالون</h3>
@@ -1098,10 +904,6 @@
                  <div>
                    <label class="block text-gray-400 text-xs font-bold mb-1.5">رقم الهاتف (اختياري)</label>
                    <input type="tel" id="admin-add-phone" value="${state.adminAdd.phone}" placeholder="010..." class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition" dir="ltr">
-                 </div>
-                 <div>
-                   <label class="block text-gray-400 text-xs font-bold mb-1.5">إنشاء رقم سري للعميل (اختياري)</label>
-                   <input type="password" id="admin-add-pin" placeholder="••••" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition text-center tracking-widest">
                  </div>
                  <div class="flex gap-4">
                     <div class="flex-1">
@@ -1328,7 +1130,6 @@
       const isReturning = state.customerRecord && state.customerRecord.visitCount > 0;
       
       const waitingCountToday = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === today).length;
-      
       const showForm = !isReturning || state.showNewBookingForm;
 
       let contentHTML = getGalleryHTML(); 
@@ -1702,43 +1503,34 @@
     document.getElementById('form-create-shop')?.addEventListener('submit', async (e) => {
        e.preventDefault();
        const sName = document.getElementById('saas-shop-name').value.trim();
-       const sOwnerId = document.getElementById('saas-owner-id').value.trim().toLowerCase();
-       const sSlug = document.getElementById('saas-shop-slug').value.trim().toLowerCase();
-       const sPin = document.getElementById('saas-shop-pin').value.trim();
+       const sId = document.getElementById('saas-shop-slug').value.trim().toLowerCase();
+       const sPin = document.getElementById('saas-shop-pin-reg').value.trim();
+       const ownerId = document.getElementById('saas-owner-id').value.trim();
 
-       if(!sName || !sOwnerId || !sSlug || !sPin) return;
+       if(!sName || !sId || !sPin || !ownerId) return;
 
        const btn = e.target.querySelector('button[type="submit"]');
+       const originalHTML = btn.innerHTML;
        btn.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin mx-auto"></i>`;
        lucide.createIcons();
 
        try {
-          const shopDocRef = doc(db, ROOT_COLLECTION, sSlug);
+          const shopDocRef = doc(db, ROOT_COLLECTION, sId);
           const snap = await getDoc(shopDocRef);
           if (snap.exists()) {
-             customAlert("عذراً، هذا الرابط (URL) مستخدم بالفعل من قبل صالون آخر. يرجى اختيار رابط مختلف.");
-             btn.innerHTML = `إنشاء النظام للصالون الآن <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
-             lucide.createIcons();
-             return;
-          }
-
-          const ownerQuery = query(collection(db, ROOT_COLLECTION), where('ownerId', '==', sOwnerId));
-          const ownerDocs = await getDocs(ownerQuery);
-          if (!ownerDocs.empty) {
-             customAlert("عذراً، رقم الهاتف أو البريد الإلكتروني مسجل لصالون آخر بالفعل!");
-             btn.innerHTML = `إنشاء النظام للصالون الآن <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
+             customAlert("عذراً، هذا الرابط مستخدم بالفعل من قبل صالون آخر. يرجى اختيار رابط مختلف.");
+             btn.innerHTML = originalHTML;
              lucide.createIcons();
              return;
           }
 
           const subscriptionEnd = Date.now() + (14 * 24 * 60 * 60 * 1000); // 14 Days Free Trial
           
-          const newShopData = {
+          await setDoc(shopDocRef, {
+             ownerId: ownerId,
              shopName: sName,
-             ownerId: sOwnerId, 
              adminPin: sPin,
              subscriptionEnd: subscriptionEnd,
-             isActive: true, 
              isOpen: false,
              currentTicket: 0,
              nextTicketToIssue: 1,
@@ -1749,80 +1541,20 @@
              services: ["حلاقة شعر", "عمل فتلة", "ماسك للوجه", "حمام بخار", "فرد شعر"],
              products: ["جيل تصفيف", "كريم شعر", "زيت لحية"],
              gallery: DEFAULT_GALLERY
-          };
-          
-          await setDoc(shopDocRef, newShopData);
+          });
 
-          state.shopId = sSlug;
+          // Log admin in automatically after creation
+          state.shopId = sId;
           state.role = 'admin';
-          state.shopState = { ...state.shopState, ...newShopData };
-          
-          safeUpdateURL(); 
-          
+          sessionStorage.setItem('saasAdminShop', sId);
+          updateURLWithPhone();
           state.loading = true;
           updateViewVisibility();
           await setupFirebaseListeners();
+
        } catch (error) {
           console.error(error);
           customAlert("حدث خطأ أثناء الإنشاء، يرجى المحاولة مرة أخرى.");
-          btn.innerHTML = `إنشاء النظام للصالون الآن <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
-          lucide.createIcons();
-       }
-    });
-
-    // Form: SaaS Owner Login
-    document.getElementById('form-saas-login')?.addEventListener('submit', async (e) => {
-       e.preventDefault();
-       const sOwnerId = document.getElementById('login-owner-id').value.trim().toLowerCase();
-       const sPin = document.getElementById('login-owner-pin').value.trim();
-       if(!sOwnerId || !sPin) return;
-
-       const btn = e.target.querySelector('button[type="submit"]');
-       const originalHTML = btn.innerHTML;
-       btn.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin mx-auto"></i>`;
-       lucide.createIcons();
-
-       try {
-          const ownerQuery = query(collection(db, ROOT_COLLECTION), where('ownerId', '==', sOwnerId));
-          const querySnapshot = await getDocs(ownerQuery);
-          
-          let matchedDoc = null;
-          let matchedData = null;
-
-          if (!querySnapshot.empty) {
-             querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                if(data.adminPin === sPin) {
-                   matchedDoc = doc;
-                   matchedData = data;
-                }
-             });
-          } else {
-             const legacyDocRef = doc(db, ROOT_COLLECTION, sOwnerId);
-             const legacySnap = await getDoc(legacyDocRef);
-             if(legacySnap.exists() && legacySnap.data().adminPin === sPin) {
-                matchedDoc = legacySnap;
-                matchedData = legacySnap.data();
-             }
-          }
-
-          if (matchedDoc) {
-             state.shopId = matchedDoc.id;
-             state.role = 'admin';
-             state.shopState = { ...state.shopState, ...matchedData };
-             
-             safeUpdateURL();
-
-             state.loading = true;
-             updateViewVisibility();
-             await setupFirebaseListeners();
-          } else {
-             customAlert("بيانات الدخول غير صحيحة، أو الحساب غير موجود.");
-          }
-       } catch (error) {
-          console.error(error);
-          customAlert("حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى.");
-       } finally {
           btn.innerHTML = originalHTML;
           lucide.createIcons();
        }
@@ -1836,36 +1568,12 @@
       const shopRef = state.shopId ? doc(db, ROOT_COLLECTION, state.shopId) : null;
 
       if (action === 'show-saas-register') {
-         document.getElementById('saas-login-container').classList.add('hidden');
+         document.getElementById('form-saas-login').parentElement.classList.add('hidden');
          document.getElementById('saas-register-container').classList.remove('hidden');
       }
-      if (action === 'show-saas-login') {
+      if (action === 'hide-saas-register') {
          document.getElementById('saas-register-container').classList.add('hidden');
-         document.getElementById('saas-login-container').classList.remove('hidden');
-      }
-
-      if (action === 'master-toggle-status') {
-         const id = target.getAttribute('data-id');
-         const isActive = target.getAttribute('data-active') === 'true';
-         await updateDoc(doc(db, ROOT_COLLECTION, id), { isActive: !isActive });
-         customAlert(`تم ${!isActive ? 'تفعيل' : 'إيقاف'} الصالون بنجاح.`);
-      }
-
-      if (action === 'master-extend') {
-         const id = target.getAttribute('data-id');
-         const months = parseInt(target.getAttribute('data-months'));
-         const shop = state.allShops.find(s => s.id === id);
-         if(shop) {
-            const ok = await customConfirm(`هل أنت متأكد من تمديد اشتراك ${shop.shopName} لمدة ${months} شهر؟`);
-            if(ok) {
-               const msToAdd = months * 30 * 24 * 60 * 60 * 1000;
-               let newEnd = shop.subscriptionEnd;
-               if(newEnd < Date.now()) newEnd = Date.now(); 
-               newEnd += msToAdd;
-               await updateDoc(doc(db, ROOT_COLLECTION, id), { subscriptionEnd: newEnd, isActive: true });
-               customAlert("تم تمديد الاشتراك بنجاح.");
-            }
-         }
+         document.getElementById('form-saas-login').parentElement.classList.remove('hidden');
       }
 
       if (action === 'admin-switch-tab') {
@@ -2168,7 +1876,6 @@
       if (action === 'admin-add-customer') {
         const nameInput = document.getElementById('admin-add-name').value.trim();
         const phoneInput = document.getElementById('admin-add-phone').value.trim() || 'بدون رقم';
-        const pinInput = document.getElementById('admin-add-pin').value.trim();
         const dateInput = document.getElementById('admin-add-date').value;
         const timeInput = document.getElementById('admin-add-time').value;
 
@@ -2193,9 +1900,7 @@
             const custRef = doc(db, ROOT_COLLECTION, state.shopId, 'customers', phoneInput);
             const custSnap = await getDoc(custRef);
             if (!custSnap.exists()) {
-                await setDoc(custRef, { phone: phoneInput, pin: pinInput, name: nameInput, visitCount: 0, firstVisitDate: new Date().toISOString(), lastVisitDate: new Date().toISOString() });
-            } else if (pinInput) {
-               await updateDoc(custRef, { pin: pinInput });
+                await setDoc(custRef, { phone: phoneInput, name: nameInput, visitCount: 0, firstVisitDate: new Date().toISOString(), lastVisitDate: new Date().toISOString() });
             }
         }
 
@@ -2287,34 +1992,21 @@
         const custRef = doc(db, ROOT_COLLECTION, state.shopId, 'customers', state.customerPhone);
         const custSnap = await getDoc(custRef);
         if (!custSnap.exists()) {
-           await setDoc(custRef, { phone: state.customerPhone, pin: state.tempCustomerPin, name: state.customerName, visitCount: 0, firstVisitDate: new Date().toISOString(), lastVisitDate: new Date().toISOString() });
+           await setDoc(custRef, { phone: state.customerPhone, name: state.customerName, visitCount: 0, firstVisitDate: new Date().toISOString(), lastVisitDate: new Date().toISOString() });
         }
 
-        safeUpdateURL();
+        updateURLWithPhone();
         state.tempBookingDate = '';
         state.tempBookingTime = '';
         state.showNewBookingForm = false; 
       }
 
-      if (target.id === 'btn-role-customer') {
-        state.role = 'customer';
-        updateViewVisibility();
-      }
-      if (target.id === 'btn-role-admin') {
-        state.showAdminLogin = true;
-        document.getElementById('input-admin-pin').value = '';
-        updateViewVisibility();
-        setTimeout(() => document.getElementById('input-admin-pin').focus(), 100);
-      }
-      if (action === 'back-to-roles') {
-        state.showAdminLogin = false;
-        updateViewVisibility();
-      }
       if (target.id === 'btn-change-account' || action === 'logout-link') {
         const ok = await customConfirm("هل تريد العودة للرئيسية وتسجيل الخروج؟");
         if(ok) {
-           state.role = null; state.customerPhone = ''; state.customerName = ''; state.myTicket = null; state.customerRecord = null; state.showNewBookingForm = false; state.tempBookingDate = ''; state.tempBookingTime = ''; state.showAdminLogin = false;
-           safeUpdateURL();
+           sessionStorage.removeItem('saasAdminShop'); // Clear admin session
+           state.role = null; state.customerPhone = ''; state.customerName = ''; state.myTicket = null; state.customerRecord = null; state.showNewBookingForm = false; state.tempBookingDate = ''; state.tempBookingTime = '';
+           updateURLWithPhone();
            updateViewVisibility();
         }
       }
@@ -2391,95 +2083,103 @@
        if (e.target.id === 'portfolio-file-input' && shopRef) handleCustomerImageUpload(e.target);
     });
 
-    // Master Admin Login Form Submit
-    document.getElementById('form-master-login')?.addEventListener('submit', (e) => {
-       e.preventDefault();
-       const pin = document.getElementById('input-master-pin').value;
-       if(pin === MASTER_ADMIN_PIN) {
-          state.masterAdminLoggedIn = true;
-          setupMasterListeners();
-       } else {
-          customAlert("الرقم السري للمنصة غير صحيح.");
-       }
-    });
-
     document.getElementById('form-customer-login')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const phone = document.getElementById('input-customer-phone').value.trim();
       const authSection = document.getElementById('customer-auth-section');
       const nameWrapper = document.getElementById('name-input-wrapper');
       const nameInput = document.getElementById('input-customer-name');
-      const pinInput = document.getElementById('input-customer-pin');
       const btnSubmit = document.getElementById('btn-login-submit');
       const instructionText = document.getElementById('login-instruction-text');
 
       if (phone.length >= 8) {
          if (authSection.classList.contains('hidden')) {
-            // First step: Check phone
             btnSubmit.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin mx-auto"></i>`;
             lucide.createIcons();
             
             await fetchCustomerRecord(phone);
 
-            authSection.classList.remove('hidden', 'opacity-0', 'h-0'); 
-            authSection.classList.add('opacity-100', 'h-auto', 'mb-6');
-            
             if (state.customerRecord) {
-               // Returning customer
-               nameWrapper.classList.add('hidden');
-               nameInput.required = false;
-               pinInput.required = true;
-               pinInput.value = '';
-               document.getElementById('label-customer-pin').innerText = "الرقم السري الخاص بك";
-               document.getElementById('hint-customer-pin').innerText = "أدخل الرقم السري الذي قمت بإنشائه مسبقاً للدخول.";
-               instructionText.innerText = "أهلاً بك مجدداً! برجاء إدخال الرقم السري.";
-               btnSubmit.innerHTML = `تسجيل الدخول <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
+               // العميل قديم: تخطي سؤال الاسم
+               state.customerPhone = phone;
+               state.customerName = state.customerRecord.name || 'عميلنا المميز';
+               updateURLWithPhone(); 
+               updateViewVisibility();
             } else {
-               // New customer
+               // عميل جديد: اطلب الاسم فقط
+               authSection.classList.remove('hidden', 'opacity-0', 'h-0'); 
+               authSection.classList.add('opacity-100', 'h-auto', 'mb-6');
                nameWrapper.classList.remove('hidden');
                nameInput.required = true;
-               pinInput.required = true;
-               pinInput.value = '';
-               document.getElementById('label-customer-pin').innerText = "إنشاء رقم سري للحساب";
-               document.getElementById('hint-customer-pin').innerText = "قم بإنشاء رقم سري بسيط (مثل 1234) لتسجيل الدخول في المرات القادمة لحماية بياناتك.";
-               instructionText.innerText = "يبدو أنك عميل جديد، برجاء إدخال بياناتك لإنشاء حساب.";
+               instructionText.innerText = "يبدو أنك عميل جديد، برجاء إدخال اسمك الكريم.";
                btnSubmit.innerHTML = `تسجيل جديد وحجز دور <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
+               lucide.createIcons();
             }
-            lucide.createIcons();
          } else {
-            // Second step: Verify PIN / Save Name & PIN
-            const pin = pinInput.value.trim();
-            
-            if (state.customerRecord) {
-               // Verify existing PIN
-               // Fallback: If old customer doesn't have a PIN saved in DB yet, let them through and save this PIN.
-               if (state.customerRecord.pin) {
-                  if (state.customerRecord.pin !== pin) {
-                     return customAlert("الرقم السري غير صحيح، حاول مرة أخرى.");
-                  }
-               } else {
-                  // Save PIN for legacy user
-                  await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'customers', phone), { pin: pin });
-               }
+            // حفظ الاسم للعميل الجديد
+            const name = nameInput.value.trim();
+            if (name.length > 0) {
                state.customerPhone = phone; 
-               state.customerName = state.customerRecord.name || 'عميلنا المميز';
-               safeUpdateURL(); updateViewVisibility();
+               state.customerName = name;
+               updateURLWithPhone(); 
+               updateViewVisibility();
             } else {
-               // New user saving
-               const name = nameInput.value.trim();
-               if (name.length > 0 && pin.length > 0) {
-                  state.customerPhone = phone; 
-                  state.customerName = name;
-                  state.tempCustomerPin = pin; // Store temporarily to save during booking
-                  safeUpdateURL(); updateViewVisibility();
-               } else {
-                  customAlert("برجاء إدخال الاسم والرقم السري المكون من أرقام.");
-               }
+               customAlert("برجاء إدخال الاسم الكريم.");
             }
          }
       } else {
          customAlert("رقم الهاتف غير صحيح.");
       }
+    });
+
+    document.getElementById('form-saas-login')?.addEventListener('submit', async (e) => {
+       e.preventDefault();
+       const ownerId = document.getElementById('login-owner-id').value.trim();
+       const sPin = document.getElementById('login-owner-pin').value.trim();
+       if(!ownerId || !sPin) return;
+
+       const btn = e.target.querySelector('button[type="submit"]');
+       const originalHTML = btn.innerHTML;
+       btn.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin mx-auto"></i>`;
+       lucide.createIcons();
+
+       try {
+          const ownerQuery = query(collection(db, ROOT_COLLECTION), where('ownerId', '==', ownerId));
+          const querySnapshot = await getDocs(ownerQuery);
+          
+          let matchedDoc = null;
+          let matchedData = null;
+
+          if (!querySnapshot.empty) {
+             querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if(data.adminPin === sPin) {
+                   matchedDoc = doc;
+                   matchedData = data;
+                }
+             });
+          }
+
+          if (matchedDoc) {
+             state.shopId = matchedDoc.id;
+             state.role = 'admin';
+             sessionStorage.setItem('saasAdminShop', matchedDoc.id); // Save Session
+             state.shopState = { ...state.shopState, ...matchedData };
+             
+             updateURLWithPhone();
+             state.loading = true;
+             updateViewVisibility();
+             await setupFirebaseListeners();
+          } else {
+             customAlert("بيانات الدخول (الرقم/PIN) غير صحيحة.");
+          }
+       } catch (error) {
+          console.error(error);
+          customAlert("حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى.");
+       } finally {
+          btn.innerHTML = originalHTML;
+          lucide.createIcons();
+       }
     });
 
     document.addEventListener('input', (e) => {
@@ -2490,23 +2190,21 @@
     const initApp = async () => {
       lucide.createIcons();
       const urlParams = new URLSearchParams(window.location.search);
-      
-      // Check Master Admin Route
-      if (urlParams.get('master') === 'admin') {
-         state.isMasterAdminMode = true;
-         updateViewVisibility();
-         return;
-      }
-
       state.shopId = urlParams.get('shop');
       
+      // Determine Role based on Session and URL
+      const adminSession = sessionStorage.getItem('saasAdminShop');
+      if (adminSession && adminSession === state.shopId) {
+         state.role = 'admin'; // Admin session persists
+      } else if (state.shopId) {
+         state.role = 'customer'; // Default immediately to customer
+      }
+
       if(urlParams.get('phone')) {
         state.customerPhone = urlParams.get('phone');
         if(urlParams.get('name')) state.customerName = urlParams.get('name');
         state.role = 'customer'; 
         await fetchCustomerRecord(state.customerPhone);
-      } else if (urlParams.get('role') === 'customer') {
-        state.role = 'customer';
       }
 
       if (!auth) return;
@@ -2549,12 +2247,6 @@
              state.isSubscriptionExpired = true;
           } else {
              state.isSubscriptionExpired = false;
-          }
-
-          if(data.isActive === false) {
-             state.isShopActive = false;
-          } else {
-             state.isShopActive = true;
           }
 
           state.shopState = { ...state.shopState, ...data };
@@ -2652,5 +2344,3 @@
   </script>
 </body>
 </html>
-```
-  
