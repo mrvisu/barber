@@ -928,7 +928,7 @@
             
             <div class="text-center bg-gray-950 p-6 rounded-2xl border border-gray-800 shadow-inner mb-4 relative z-10">
               <p class="text-gray-500 mb-2 font-bold text-sm">رقم الدور بالداخل</p>
-              <div class="text-7xl font-black text-white mb-2 drop-shadow-lg">${state.shopState.currentTicket || '--'}</div>
+              <div class="text-7xl font-black text-white mb-2 drop-shadow-lg">${activeTicket ? activeTicket.ticketNumber : (state.shopState.currentTicket || '--')}</div>
               <div class="text-amber-500 font-bold text-lg mb-6">${activeTicket ? activeTicket.name : '---'}</div>
               
               <div class="flex justify-center items-center gap-3 text-amber-500 font-bold bg-gray-900 py-3 rounded-xl border border-amber-500/20 shadow-inner mb-6">
@@ -1259,8 +1259,9 @@
       const isUrgentTimer = state.timeLeft <= 300000 && state.timeLeft > 0;
       const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
 
+      const activeTicket = state.queue.find(q => q.status === 'active');
       const tNum = state.myTicket.ticketNumber;
-      const cNum = state.shopState.currentTicket || '--';
+      const cNum = activeTicket ? activeTicket.ticketNumber : (state.shopState.currentTicket || '--');
 
       const now = new Date();
       const currentH = now.getHours();
@@ -1660,14 +1661,14 @@
         if (action === 'end-current') {
            await updateDoc(shopRef, { timerEndTime: 0, currentTicket: 0 });
         } else if (action === 'end-and-next') {
-           const waitingQueue = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
-           if(waitingQueue.length > 0) {
-              const nextCust = waitingQueue[0];
+           const allWaiting = state.queue.filter(q => q.status === 'waiting');
+           if(allWaiting.length > 0) {
+              const nextCust = allWaiting[0];
               await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', nextCust.id), { status: 'active', adminMessage: 'تفضل، دورك الآن!' });
               await updateDoc(shopRef, { currentTicket: nextCust.ticketNumber, timerEndTime: Date.now() + (30 * 60 * 1000) }); 
            } else {
               await updateDoc(shopRef, { timerEndTime: 0, currentTicket: 0 });
-              customAlert("تم الإنهاء، ولا يوجد عملاء آخرين في انتظار هذا اليوم.");
+              customAlert("تم الإنهاء، ولا يوجد عملاء آخرين في الانتظار.");
            }
         }
       }
@@ -1778,6 +1779,11 @@
          const customer = state.queue.find(q => q.id === id);
          
          if(customer) {
+            // إنهاء حالة أي عميل حالي لتجنب التضارب
+            const currentActives = state.queue.filter(q => q.status === 'active' && q.id !== id);
+            for (const active of currentActives) {
+               await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', active.id), { status: 'completed' });
+            }
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'queue', id), { status: 'active' });
             await updateDoc(shopRef, { currentTicket: customer.ticketNumber, timerEndTime: Date.now() + durationMs });
          }
