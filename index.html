@@ -1253,8 +1253,8 @@
       
       // 3) WAITING STATUS
       const sameDayWaiting = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate);
-      const waitingBeforeMe = sameDayWaiting.filter(q => q.ticketNumber < state.myTicket.ticketNumber);
-      const myPosition = waitingBeforeMe.length + 1;
+      const myIndex = sameDayWaiting.findIndex(q => q.id === state.myTicket.id);
+      const myPosition = myIndex !== -1 ? myIndex + 1 : 0;
       
       const isUrgentTimer = state.timeLeft <= 300000 && state.timeLeft > 0;
       const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
@@ -2251,7 +2251,15 @@
         state.queue = qData;
         
         if (state.customerPhone) {
-          const mine = qData.find(q => q.phone === state.customerPhone && (q.status === 'waiting' || q.status === 'active' || q.status === 'completed'));
+          const myTickets = qData.filter(q => q.phone === state.customerPhone);
+          // الأولوية دائماً لعرض الدور النشط أو الذي في الانتظار
+          let mine = myTickets.find(q => q.status === 'active') || myTickets.find(q => q.status === 'waiting');
+          if (!mine) {
+             // إذا لم يجد، يعرض دور منتهي بشرط أن يكون لليوم الحالي فقط
+             const today = new Date().toISOString().split('T')[0];
+             const todayCompleted = myTickets.filter(q => q.status === 'completed' && q.bookingDate === today);
+             mine = todayCompleted.length > 0 ? todayCompleted[todayCompleted.length - 1] : null;
+          }
           state.myTicket = mine || null;
         }
 
