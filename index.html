@@ -153,6 +153,15 @@
        <h1 class="text-4xl font-black text-white mb-4">انتهى اشتراك الصالون</h1>
        <p class="text-gray-400 text-lg mb-8 max-w-md">عفواً، لقد انتهت فترة اشتراك هذا الصالون. يرجى التواصل مع الإدارة لتجديد الاشتراك.</p>
     </div>
+    
+    <!-- VIEW: Banned -->
+    <div id="view-banned" class="hidden-view min-h-[70vh] flex flex-col items-center justify-center p-4 text-center">
+       <div class="w-32 h-32 bg-red-900/50 border border-red-500 rounded-full flex items-center justify-center mb-6">
+          <i data-lucide="shield-ban" class="w-16 h-16 text-red-500"></i>
+       </div>
+       <h1 class="text-4xl font-black text-white mb-4">تم حظر الوصول</h1>
+       <p class="text-gray-400 text-lg mb-8 max-w-md">عفواً، لا يمكنك استخدام النظام حالياً أو الحجز بناءً على قرار من إدارة الصالون.</p>
+    </div>
 
     <!-- VIEW: Admin Panel -->
     <div id="view-admin" class="hidden-view space-y-6">
@@ -160,7 +169,7 @@
       <input type="file" id="portfolio-file-input" accept="image/*" class="hidden" />
     </div>
 
-    <!-- VIEW: Customer Login (Cleaned Up - No PIN) -->
+    <!-- VIEW: Customer Login -->
     <div id="view-customer-login" class="hidden-view max-w-md mx-auto mt-12 bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-800 animate-fade-in-down">
       <div class="text-center mb-8">
         <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
@@ -172,19 +181,19 @@
       
       <form id="form-customer-login" class="space-y-6">
         <div>
-          <label class="block text-gray-400 mb-2 text-sm font-bold">رقم الهاتف المحمول</label>
+          <label class="block text-gray-400 mb-2 text-sm font-bold">رقم الهاتف المحمول (يبدأ بـ 01)</label>
           <div class="relative">
             <i data-lucide="phone" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-            <input type="tel" id="input-customer-phone" required class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-left text-lg font-bold" placeholder="010..." dir="ltr" />
+            <input type="tel" id="input-customer-phone" required maxlength="11" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-left text-lg font-bold tracking-widest" placeholder="01012345678" dir="ltr" />
           </div>
         </div>
         
         <div id="customer-auth-section" class="hidden transition-all duration-500 opacity-0 h-0 overflow-hidden">
            <div id="name-input-wrapper" class="hidden">
-             <label class="block text-gray-400 mb-2 text-sm font-bold">الاسم الكريم (لأول مرة)</label>
+             <label class="block text-gray-400 mb-2 text-sm font-bold">الاسم الكريم (لأول مرة - حروف فقط)</label>
              <div class="relative">
                <i data-lucide="user-check" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"></i>
-               <input type="text" id="input-customer-name" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-right text-lg" placeholder="أدخل اسمك..." />
+               <input type="text" id="input-customer-name" class="w-full bg-gray-950 border border-gray-700 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-right text-lg" placeholder="أدخل اسمك الحقيقي..." />
              </div>
            </div>
         </div>
@@ -217,7 +226,7 @@
     <div id="custom-modal-box" class="bg-gray-900 border border-gray-700 rounded-3xl p-6 md:p-8 shadow-2xl max-w-md w-full transform scale-95 transition-transform duration-300">
       <div id="custom-modal-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
       <h3 id="custom-modal-title" class="text-xl font-bold text-white text-center mb-2"></h3>
-      <p id="custom-modal-message" class="text-gray-400 text-center mb-6 text-sm"></p>
+      <p id="custom-modal-message" class="text-gray-400 text-center mb-6 text-sm leading-relaxed"></p>
       
       <div id="custom-modal-content" class="mb-6 hidden w-full text-right text-gray-300 text-sm space-y-3"></div>
 
@@ -236,6 +245,13 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, addDoc, deleteDoc, serverTimestamp, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    // --- Generate Device ID ---
+    let localDeviceId = localStorage.getItem('barber_device_id');
+    if (!localDeviceId) {
+        localDeviceId = crypto.randomUUID();
+        localStorage.setItem('barber_device_id', localDeviceId);
+    }
 
     // --- Modal Logic ---
     const showModal = (options) => {
@@ -294,6 +310,7 @@
     };
 
     const customAlert = (msg) => showModal({ type: 'alert', message: msg, iconName: 'bell', iconBgClass: 'bg-blue-500/20 text-blue-500' });
+    const customError = (msg) => showModal({ type: 'alert', title: 'خطأ', message: msg, iconName: 'alert-triangle', iconBgClass: 'bg-red-500/20 text-red-500' });
     const customConfirm = (msg) => showModal({ type: 'confirm', message: msg, iconName: 'help-circle', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'نعم، متأكد' });
     const customPrompt = (msg, def = '') => showModal({ type: 'prompt', message: msg, defaultValue: def, iconName: 'edit-3', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'حفظ' });
     
@@ -372,7 +389,9 @@
         workingHours: { start: "10:00", end: "23:00" }, 
         services: ["حلاقة شعر", "عمل فتلة", "ماسك للوجه", "حمام بخار", "فرد شعر"],
         products: ["جيل تصفيف", "كريم شعر", "زيت لحية"],
-        gallery: DEFAULT_GALLERY
+        gallery: DEFAULT_GALLERY,
+        bannedPhones: [],
+        bannedDevices: []
       },
       queue: [],
       customersDB: [], 
@@ -398,6 +417,25 @@
     let unsubShop = null;
     let unsubQueue = null;
     let unsubCustomers = null;
+
+    // --- Helper Functions ---
+    const checkCooldown = () => {
+        // Check if the user has a completed ticket within the last 48 hours
+        const allMyCompleted = state.queue.filter(q => q.phone === state.customerPhone && q.status === 'completed');
+        if (allMyCompleted.length > 0) {
+            const latest = allMyCompleted[allMyCompleted.length - 1]; // Queue is sorted chronologically
+            if (latest.timestamp) {
+                const ticketTime = latest.timestamp.toMillis ? latest.timestamp.toMillis() : (latest.timestamp.seconds * 1000);
+                const hoursPassed = (Date.now() - ticketTime) / (1000 * 60 * 60);
+                if (hoursPassed < 48) {
+                    const remainingHours = Math.ceil(48 - hoursPassed);
+                    customAlert(`أهلاً بك يا ${state.customerName}!\nلقد حصلت على خدمة من الصالون مؤخراً. لضمان فرصة متساوية للجميع، يمكنك حجز موعد جديد بعد ${remainingHours} ساعة.`);
+                    return false; // Prevent booking
+                }
+            }
+        }
+        return true; // Allowed
+    };
 
     const formatTime = (milliseconds) => {
       if (milliseconds <= 0) return "00:00:00";
@@ -611,7 +649,8 @@
         admin: document.getElementById('view-admin'),
         customerLogin: document.getElementById('view-customer-login'),
         customerBooking: document.getElementById('view-customer-booking'),
-        customerDashboard: document.getElementById('view-customer-dashboard')
+        customerDashboard: document.getElementById('view-customer-dashboard'),
+        banned: document.getElementById('view-banned')
       };
       const header = document.getElementById('main-header');
 
@@ -623,23 +662,31 @@
         return;
       }
 
-      // If no shopId is provided -> show SaaS platform registration
       if (!state.shopId) {
         views.saasLanding.classList.remove('hidden-view');
         return;
       }
 
-      // If subscription expired -> block everything
       if (state.isSubscriptionExpired) {
          views.subscriptionExpired.classList.remove('hidden-view');
          return;
+      }
+
+      // Check Ban Status for Customers
+      if (state.role !== 'admin') {
+         const isPhoneBanned = state.shopState.bannedPhones && state.shopState.bannedPhones.includes(state.customerPhone);
+         const isDeviceBanned = state.shopState.bannedDevices && state.shopState.bannedDevices.includes(localDeviceId);
+         
+         if (isPhoneBanned || isDeviceBanned) {
+             views.banned.classList.remove('hidden-view');
+             return; // Stop rendering anything else
+         }
       }
 
       // We are inside a specific shop
       document.getElementById('header-shop-name').innerHTML = `${state.shopState.shopName || state.shopId}`;
       document.getElementById('login-shop-title').innerHTML = `أهلاً بك في ${state.shopState.shopName || state.shopId}`;
 
-      // Default role to customer if not admin logged in
       if (!state.role) {
          state.role = 'customer';
       }
@@ -774,6 +821,9 @@
                        <button data-action="delete-customer" data-id="${q.id}" class="text-red-400 hover:text-white hover:bg-red-500 p-2 rounded-lg transition border border-transparent hover:border-red-400" title="إلغاء الحجز">
                          <i data-lucide="trash-2" class="w-5 h-5"></i>
                        </button>
+                       <button data-action="ban-customer" data-phone="${q.phone}" data-device="${q.deviceId || ''}" class="text-red-400 hover:text-white hover:bg-red-900 p-2 rounded-lg transition border border-transparent hover:border-red-500" title="حظر العميل والجهاز">
+                         <i data-lucide="shield-ban" class="w-5 h-5"></i>
+                       </button>
                      </div>
                    </div>
                  </div>
@@ -850,9 +900,11 @@
       } else {
          dbRowsHTML = filteredDB.map(c => {
             const dateStr = c.lastVisitDate ? new Date(c.lastVisitDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : '---';
+            const isBanned = state.shopState.bannedPhones && state.shopState.bannedPhones.includes(c.phone);
+            const banBadge = isBanned ? '<span class="bg-red-500/20 text-red-500 text-[10px] px-1.5 rounded mr-2 border border-red-500/30">محظور</span>' : '';
             return `
                <tr class="border-b border-gray-800 hover:bg-gray-800/70 transition group cursor-pointer" data-action="view-db-customer" data-phone="${c.phone}">
-                  <td class="p-3 text-white font-bold group-hover:text-amber-500 transition-colors">${c.name || '---'}</td>
+                  <td class="p-3 text-white font-bold group-hover:text-amber-500 transition-colors">${c.name || '---'} ${banBadge}</td>
                   <td class="p-3 text-gray-400 font-mono text-sm" dir="ltr">${c.phone}</td>
                   <td class="p-3 text-center text-amber-500 font-bold">${c.visitCount || 0}</td>
                   <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
@@ -860,7 +912,8 @@
                      <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <a href="https://wa.me/${c.phone.replace(/[^0-9]/g, '')}" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب" onclick="event.stopPropagation();"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
                         <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال" onclick="event.stopPropagation();"><i data-lucide="phone" class="w-4 h-4"></i></a>
-                        <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="حذف من السجل نهائياً"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                        <button data-action="${isBanned ? 'unban-db-customer' : 'ban-db-customer'}" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="${isBanned ? 'إلغاء الحظر' : 'حظر العميل'}" onclick="event.stopPropagation();"><i data-lucide="${isBanned ? 'shield-check' : 'shield-ban'}" class="w-4 h-4"></i></button>
+                        <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500 hover:text-white p-2 rounded-lg transition" title="حذف من السجل نهائياً" onclick="event.stopPropagation();"><i data-lucide="trash" class="w-4 h-4"></i></button>
                      </div>
                   </td>
                </tr>
@@ -1337,7 +1390,7 @@
                <p class="text-lg text-gray-300 mb-8">نتمنى أن تكون قصة شعرك قد نالت إعجابك.</p>
                ${ratingUI}
                <div class="mt-8 pt-6 border-t border-gray-800">
-                 <button id="btn-change-account-link" data-action="logout-link" class="text-gray-500 hover:text-amber-500 underline text-sm">العودة للرئيسية لحجز موعد جديد</button>
+                 <button id="btn-change-account-link" data-action="logout-link" class="text-gray-500 hover:text-amber-500 underline text-sm">العودة للرئيسية לחجز موعد جديد</button>
                </div>
             </div>
          `;
@@ -1564,7 +1617,9 @@
              workingHours: { start: "10:00", end: "23:00" },
              services: ["حلاقة شعر", "عمل فتلة", "ماسك للوجه", "حمام بخار", "فرد شعر"],
              products: ["جيل تصفيف", "كريم شعر", "زيت لحية"],
-             gallery: DEFAULT_GALLERY
+             gallery: DEFAULT_GALLERY,
+             bannedPhones: [],
+             bannedDevices: []
           });
 
           // Log admin in automatically after creation
@@ -1618,6 +1673,44 @@
          const phone = target.getAttribute('data-phone');
          const customer = state.customersDB.find(c => c.phone === phone);
          if(customer) showCustomerDetailsModal(customer);
+      }
+
+      // --- Ban Action ---
+      if (action === 'ban-customer' || action === 'ban-db-customer') {
+          const phoneToBan = target.getAttribute('data-phone');
+          const deviceToBan = target.getAttribute('data-device');
+          const ok = await customConfirm('هل أنت متأكد من حظر هذا العميل؟ لن يتمكن من استخدام النظام للحجز من هذا الرقم أو الجهاز مرة أخرى لضمان الجدية.');
+          if (ok) {
+              const newBannedPhones = [...(state.shopState.bannedPhones || [])];
+              if(!newBannedPhones.includes(phoneToBan)) newBannedPhones.push(phoneToBan);
+              
+              let updates = { bannedPhones: newBannedPhones };
+              
+              if (deviceToBan) {
+                  const newBannedDevices = [...(state.shopState.bannedDevices || [])];
+                  if(!newBannedDevices.includes(deviceToBan)) newBannedDevices.push(deviceToBan);
+                  updates.bannedDevices = newBannedDevices;
+              }
+              
+              await updateDoc(shopRef, updates);
+              
+              // Remove active/waiting tickets for this user
+              const ticketsToDelete = state.queue.filter(q => q.phone === phoneToBan && (q.status === 'waiting' || q.status === 'active'));
+              for(let t of ticketsToDelete) {
+                  await deleteDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', t.id));
+              }
+              customAlert("تم حظر العميل بنجاح.");
+          }
+      }
+
+      if (action === 'unban-db-customer') {
+          const phoneToUnban = target.getAttribute('data-phone');
+          const ok = await customConfirm('هل أنت متأكد من فك الحظر عن هذا العميل؟');
+          if (ok) {
+              const newBannedPhones = (state.shopState.bannedPhones || []).filter(p => p !== phoneToUnban);
+              await updateDoc(shopRef, { bannedPhones: newBannedPhones });
+              customAlert("تم فك الحظر بنجاح.");
+          }
       }
 
       if (action === 'toggle-services-management') {
@@ -1917,7 +2010,8 @@
 
         await addDoc(collection(db, ROOT_COLLECTION, state.shopId, 'queue'), {
           phone: phoneInput, name: nameInput, ticketNumber: ticketNum, status: 'waiting', adminMessage: null, presenceStatus: 'here', 
-          bookingDate: dateInput, bookingTime: timeInput, selectedServices: state.adminAdd.services, selectedProducts: state.adminAdd.products, timestamp: serverTimestamp()
+          bookingDate: dateInput, bookingTime: timeInput, selectedServices: state.adminAdd.services, selectedProducts: state.adminAdd.products, timestamp: serverTimestamp(),
+          deviceId: localDeviceId
         });
 
         if (phoneInput !== 'بدون رقم') {
@@ -1977,7 +2071,11 @@
          }
       }
 
-      if (action === 'show-booking-form') { state.showNewBookingForm = true; renderCustomerBooking(); }
+      if (action === 'show-booking-form') { 
+         if(checkCooldown()){
+             state.showNewBookingForm = true; renderCustomerBooking(); 
+         }
+      }
       if (action === 'hide-booking-form') { state.showNewBookingForm = false; renderCustomerBooking(); }
 
       if (action === 'toggle-service') {
@@ -1996,6 +2094,10 @@
       
       if (action === 'book-ticket') {
         if (!state.customerPhone || !state.customerName) return;
+        
+        // Cooldown Check
+        if(!checkCooldown()) return;
+
         const bDate = document.getElementById('input-booking-date')?.value;
         const bTime = document.getElementById('input-booking-time')?.value;
         
@@ -2010,7 +2112,8 @@
 
         await addDoc(collection(db, ROOT_COLLECTION, state.shopId, 'queue'), {
           phone: state.customerPhone, name: state.customerName, ticketNumber: ticketNum, bookingDate: bDate, bookingTime: bTime,
-          status: 'waiting', adminMessage: null, presenceStatus: null, selectedServices: state.selectedServices, selectedProducts: state.selectedProducts, timestamp: serverTimestamp()
+          status: 'waiting', adminMessage: null, presenceStatus: null, selectedServices: state.selectedServices, selectedProducts: state.selectedProducts, timestamp: serverTimestamp(),
+          deviceId: localDeviceId // Save Device ID for ban system
         });
 
         const custRef = doc(db, ROOT_COLLECTION, state.shopId, 'customers', state.customerPhone);
@@ -2120,43 +2223,47 @@
       const btnSubmit = document.getElementById('btn-login-submit');
       const instructionText = document.getElementById('login-instruction-text');
 
-      if (phone.length >= 8) {
-         if (authSection.classList.contains('hidden')) {
-            btnSubmit.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin mx-auto"></i>`;
-            lucide.createIcons();
-            
-            await fetchCustomerRecord(phone);
+      // Validation 1: Egyptian Phone Format Check
+      const phoneRegex = /^01[0125][0-9]{8}$/;
+      if (!phoneRegex.test(phone)) {
+          return customError("برجاء إدخال رقم هاتف مصري صحيح يبدأ بـ 01 ويتكون من 11 رقم.");
+      }
 
-            if (state.customerRecord) {
-               // العميل قديم: تخطي سؤال الاسم
-               state.customerPhone = phone;
-               state.customerName = state.customerRecord.name || 'عميلنا المميز';
-               updateURLWithPhone(); 
-               updateViewVisibility();
-            } else {
-               // عميل جديد: اطلب الاسم فقط
-               authSection.classList.remove('hidden', 'opacity-0', 'h-0'); 
-               authSection.classList.add('opacity-100', 'h-auto', 'mb-6');
-               nameWrapper.classList.remove('hidden');
-               nameInput.required = true;
-               instructionText.innerText = "يبدو أنك عميل جديد، برجاء إدخال اسمك الكريم.";
-               btnSubmit.innerHTML = `تسجيل جديد وحجز دور <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
-               lucide.createIcons();
-            }
+      if (authSection.classList.contains('hidden')) {
+         btnSubmit.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin mx-auto"></i>`;
+         lucide.createIcons();
+         
+         await fetchCustomerRecord(phone);
+
+         if (state.customerRecord) {
+            // العميل قديم: تخطي سؤال الاسم
+            state.customerPhone = phone;
+            state.customerName = state.customerRecord.name || 'عميلنا المميز';
+            updateURLWithPhone(); 
+            updateViewVisibility();
          } else {
-            // حفظ الاسم للعميل الجديد
-            const name = nameInput.value.trim();
-            if (name.length > 0) {
-               state.customerPhone = phone; 
-               state.customerName = name;
-               updateURLWithPhone(); 
-               updateViewVisibility();
-            } else {
-               customAlert("برجاء إدخال الاسم الكريم.");
-            }
+            // عميل جديد: اطلب الاسم فقط
+            authSection.classList.remove('hidden', 'opacity-0', 'h-0'); 
+            authSection.classList.add('opacity-100', 'h-auto', 'mb-6');
+            nameWrapper.classList.remove('hidden');
+            nameInput.required = true;
+            instructionText.innerText = "يبدو أنك عميل جديد، برجاء إدخال اسمك الكريم.";
+            btnSubmit.innerHTML = `تسجيل جديد وحجز دور <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
+            lucide.createIcons();
          }
       } else {
-         customAlert("رقم الهاتف غير صحيح.");
+         // حفظ الاسم للعميل الجديد Validation 2
+         const name = nameInput.value.trim();
+         const nameRegex = /^[\u0621-\u064A\sA-Za-z]{3,50}$/;
+         
+         if (name.length > 0 && nameRegex.test(name)) {
+            state.customerPhone = phone; 
+            state.customerName = name;
+            updateURLWithPhone(); 
+            updateViewVisibility();
+         } else {
+            customError("برجاء إدخال اسم صحيح مكون من حروف فقط ولا يقل عن 3 حروف.");
+         }
       }
     });
 
