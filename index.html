@@ -253,6 +253,29 @@
         localStorage.setItem('barber_device_id', localDeviceId);
     }
 
+    // --- Time Sync Logic ---
+    // هذه الميزة تتخطى الوقت المضبوط يدوياً على الموبايل لضمان دقة العداد
+    let serverTimeOffset = 0;
+    const getTrueTime = () => Date.now() + serverTimeOffset;
+
+    const syncClock = async () => {
+        try {
+            const res = await fetch(window.location.href, { method: 'HEAD', cache: 'no-store' });
+            const dateHeader = res.headers.get('Date');
+            if (dateHeader) {
+                serverTimeOffset = new Date(dateHeader).getTime() - Date.now();
+            } else {
+                // Fallback API if headers are stripped
+                const fallbackRes = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+                const fallbackData = await fallbackRes.json();
+                serverTimeOffset = new Date(fallbackData.utc_datetime).getTime() - Date.now();
+            }
+        } catch (e) {
+            console.warn("Time sync error, relying on device clock.", e);
+        }
+    };
+    syncClock();
+
     // --- Modal Logic ---
     const showModal = (options) => {
       return new Promise((resolve) => {
@@ -314,6 +337,58 @@
     const customConfirm = (msg) => showModal({ type: 'confirm', message: msg, iconName: 'help-circle', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'نعم، متأكد' });
     const customPrompt = (msg, def = '') => showModal({ type: 'prompt', message: msg, defaultValue: def, iconName: 'edit-3', iconBgClass: 'bg-amber-500/20 text-amber-500', confirmText: 'حفظ' });
     
+    // --- WhatsApp Templates Menu ---
+    const openWhatsAppMenu = (phone, name, turnsLeft) => {
+        let turnsText = turnsLeft !== null ? `أمامك ${turnsLeft} أدوار فقط` : 'دورك اقترب';
+        
+        const msg1 = encodeURIComponent(`مرحباً ${name}، نود تذكيرك بموعدك في الصالون، يرجى عدم التأخير لضمان حصولك على الخدمة في وقتها. ✂️`);
+        const msg2 = encodeURIComponent(`مرحباً ${name}، نظراً للضغط الحالي في الصالون، هل يناسبك تأجيل موعدك لليوم التالي؟ نعتذر عن الإزعاج ونقدر تفهمك. 🙏`);
+        const msg3 = encodeURIComponent(`مرحباً ${name}، ${turnsText}، يرجى التوجه للصالون في أقرب وقت لتجنب تخطي دورك. ⏳`);
+        const msg4 = encodeURIComponent(`مرحباً ${name}، نتشرف بزيارتك لصالوننا. أي استفسارات نحن في الخدمة! 💈`);
+
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        
+        let html = `
+            <div class="flex flex-col gap-3">
+                <a href="https://wa.me/2${cleanPhone}?text=${msg1}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-xl border border-gray-700 flex items-center justify-between transition group">
+                    <span class="text-sm font-bold text-right group-hover:text-amber-500 transition">رسالة عدم التأخير</span>
+                    <i data-lucide="send" class="w-5 h-5 text-green-500"></i>
+                </a>
+                <a href="https://wa.me/2${cleanPhone}?text=${msg2}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-xl border border-gray-700 flex items-center justify-between transition group">
+                    <span class="text-sm font-bold text-right group-hover:text-amber-500 transition">رسالة طلب تأجيل لليوم التالي</span>
+                    <i data-lucide="calendar" class="w-5 h-5 text-amber-500"></i>
+                </a>
+        `;
+
+        if (turnsLeft !== null) {
+            html += `
+                <a href="https://wa.me/2${cleanPhone}?text=${msg3}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-xl border border-gray-700 flex items-center justify-between transition group">
+                    <span class="text-sm font-bold text-right group-hover:text-amber-500 transition">تنبيه باقتراب الدور (${turnsLeft} أدوار)</span>
+                    <i data-lucide="clock" class="w-5 h-5 text-blue-500"></i>
+                </a>
+            `;
+        } else {
+             html += `
+                <a href="https://wa.me/2${cleanPhone}?text=${msg4}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-xl border border-gray-700 flex items-center justify-between transition group">
+                    <span class="text-sm font-bold text-right group-hover:text-amber-500 transition">رسالة ترحيب عادية</span>
+                    <i data-lucide="message-circle" class="w-5 h-5 text-green-500"></i>
+                </a>
+            `;
+        }
+
+        html += `</div>`;
+        
+        showModal({
+            type: 'alert',
+            title: 'مراسلة عبر واتساب',
+            iconName: 'message-circle',
+            iconBgClass: 'bg-green-500/20 text-green-500',
+            htmlContent: html,
+            confirmText: 'إغلاق نافذة المراسلة'
+        });
+    };
+    window.openWhatsAppMenu = openWhatsAppMenu;
+
     const showCustomerDetailsModal = (customer) => {
       const firstVisit = customer.firstVisitDate ? new Date(customer.firstVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
       const lastVisit = customer.lastVisitDate ? new Date(customer.lastVisitDate).toLocaleDateString('ar-EG') : 'غير مسجل';
@@ -336,7 +411,7 @@
             <div class="flex justify-between"><span class="text-gray-500">تاريخ آخر زيارة:</span> <span class="text-white">${lastVisit}</span></div>
           </div>
           <div class="mt-4 flex gap-2">
-             <a href="https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}" target="_blank" class="flex-1 bg-green-600 hover:bg-green-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
+             <button onclick="openWhatsAppMenu('${customer.phone}', '${customer.name}', null)" class="flex-1 bg-green-600 hover:bg-green-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</button>
              <a href="tel:${customer.phone}" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-center py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"><i data-lucide="phone" class="w-4 h-4"></i> اتصال</a>
           </div>
         </div>
@@ -404,12 +479,11 @@
       selectedProducts: [],
       showNewBookingForm: false,
       tempBookingDate: '', 
-      tempBookingTime: '',
       
       adminSelectedDate: new Date().toISOString().split('T')[0],
       adminSelectedMonth: new Date().toISOString().slice(0, 7),
       adminViewTab: 'waiting',
-      adminAdd: { name: '', phone: '', date: '', time: '', services: [], products: [] }
+      adminAdd: { name: '', phone: '', date: '', services: [], products: [] }
     };
 
     let timerInterval = null;
@@ -426,7 +500,7 @@
             const latest = allMyCompleted[allMyCompleted.length - 1]; // Queue is sorted chronologically
             if (latest.timestamp) {
                 const ticketTime = latest.timestamp.toMillis ? latest.timestamp.toMillis() : (latest.timestamp.seconds * 1000);
-                const hoursPassed = (Date.now() - ticketTime) / (1000 * 60 * 60);
+                const hoursPassed = (getTrueTime() - ticketTime) / (1000 * 60 * 60);
                 if (hoursPassed < 48) {
                     const remainingHours = Math.ceil(48 - hoursPassed);
                     customAlert(`أهلاً بك يا ${state.customerName}!\nلقد حصلت على خدمة من الصالون مؤخراً. لضمان فرصة متساوية للجميع، يمكنك حجز موعد جديد بعد ${remainingHours} ساعة.`);
@@ -542,71 +616,23 @@
        `;
     };
 
-    const getAvailableTimesHTML = (selDate) => {
-      if(!selDate) return '<option value="">اختر التاريخ أولاً...</option>';
-
-      const start = state.shopState.workingHours?.start || '10:00';
-      const end = state.shopState.workingHours?.end || '23:00';
-      let [sH, sM] = start.split(':').map(Number);
-      let [eH, eM] = end.split(':').map(Number);
-
-      let options = '<option value="">اختر الوقت المتاح...</option>';
-      let foundAvailable = false;
-
-      for(let h = sH; h <= eH; h++) {
-          for(let m of [0, 30]) {
-              if(h === sH && m < sM) continue;
-              if(h === eH && m > eM) continue;
-
-              const timeStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
-              
-              const isBooked = state.queue.some(q => 
-                  q.bookingDate === selDate && 
-                  q.bookingTime === timeStr && 
-                  (q.status === 'waiting' || q.status === 'active')
-              );
-
-              if(!isBooked) {
-                 const ampm = h >= 12 ? 'مساءً' : 'صباحاً';
-                 const dispH = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-                 options += `<option value="${timeStr}">${dispH.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')} ${ampm}</option>`;
-                 foundAvailable = true;
-              }
-          }
-      }
-      if(!foundAvailable) {
-         options = '<option value="">عفواً، لا توجد أوقات متاحة في هذا اليوم</option>';
-      }
-      return options;
-    };
-
-    const updateBookingTimes = () => {
+    const updateWaitingCount = () => {
       const dateEl = document.getElementById('input-booking-date');
-      const timeEl = document.getElementById('input-booking-time');
       if(dateEl) {
          const selDate = dateEl.value;
-         if (timeEl) {
-            timeEl.innerHTML = getAvailableTimesHTML(selDate);
-            timeEl.disabled = !selDate;
-            if (state.tempBookingTime) timeEl.value = state.tempBookingTime;
-         }
-         
-         // Update dynamic waiting count
          const today = new Date().toISOString().split('T')[0];
          const dLabel = (selDate === today) ? 'اليوم' : selDate;
-         const wCount = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === selDate).length;
+         const waitingQueueForDate = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === selDate);
+         const wCount = waitingQueueForDate.length;
+         const presentCount = waitingQueueForDate.filter(q => q.presenceStatus === 'here').length;
          
          const labelEl = document.getElementById('waiting-date-label');
          const countEl = document.getElementById('waiting-count-label');
+         const presentCountEl = document.getElementById('present-count-label');
+         
          if(labelEl) labelEl.innerText = dLabel;
          if(countEl) countEl.innerText = wCount;
-      }
-
-      const adminDateEl = document.getElementById('admin-add-date');
-      const adminTimeEl = document.getElementById('admin-add-time');
-      if(adminDateEl && adminTimeEl) {
-         adminTimeEl.innerHTML = getAvailableTimesHTML(adminDateEl.value);
-         if(state.adminAdd.time) adminTimeEl.value = state.adminAdd.time;
+         if(presentCountEl) presentCountEl.innerText = presentCount;
       }
     };
 
@@ -754,18 +780,6 @@
              const isFirst = idx === 0;
              const isLast = idx === waitingQueue.length - 1;
              const customerNameDisplay = q.name ? q.name : 'بدون اسم';
-             
-             let presenceBadge = '';
-             if(q.presenceStatus === 'here') {
-               presenceBadge = `<span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded border border-green-500/30 font-bold ml-2">متواجد بالصالون</span>`;
-             } else {
-               presenceBadge = `<span class="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30 font-bold ml-2">حجز خارجي (لم يصل)</span>`;
-             }
-
-             let bookingTimeDisplay = '';
-             if (q.bookingDate && q.bookingTime) {
-                bookingTimeDisplay = `<div class="text-amber-500 text-sm font-bold flex items-center gap-1 mb-2 bg-amber-500/10 inline-block px-2 py-1 rounded"><i data-lucide="clock" class="w-4 h-4 inline"></i> الموعد: الساعة ${q.bookingTime}</div>`;
-             }
 
              let createdTimeStr = '';
              if (q.timestamp && q.timestamp.toDate) {
@@ -782,18 +796,21 @@
                  <div class="p-4 cursor-pointer hover:bg-gray-700/50 transition" data-action="toggle-details" data-id="${q.id}" data-phone="${q.phone}">
                    <div class="flex flex-col md:flex-row justify-between md:items-start gap-4">
                      <div class="flex-1 pointer-events-none">
-                       ${bookingTimeDisplay}
                        <div class="flex items-center gap-3 mb-2 pointer-events-auto">
                          <span class="bg-amber-500 text-gray-900 font-black w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md shrink-0">
                            ${q.ticketNumber}
                          </span>
-                         <div>
+                         <div class="flex-1">
                            <div class="flex items-center flex-wrap gap-2">
                              <span class="font-bold text-lg text-white">${customerNameDisplay}</span>
                              <button data-action="edit-customer-name" data-id="${q.id}" data-phone="${q.phone}" data-current-name="${customerNameDisplay}" class="text-gray-400 hover:text-amber-500 transition relative z-10" title="تعديل الاسم">
                                <i data-lucide="edit-2" class="w-4 h-4"></i>
                              </button>
-                             ${presenceBadge}
+                             
+                             <button data-action="admin-toggle-presence" data-id="${q.id}" data-status="${q.presenceStatus === 'here' ? 'outside' : 'here'}" class="text-xs px-2 py-1.5 rounded-lg border transition ${q.presenceStatus === 'here' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} flex items-center gap-1 shadow-sm relative z-10" title="تغيير حالة التواجد">
+                               <i data-lucide="${q.presenceStatus === 'here' ? 'map-pin' : 'map-pin-off'}" class="w-3 h-3"></i>
+                               ${q.presenceStatus === 'here' ? 'بالصالون' : 'بالخارج'}
+                             </button>
                            </div>
                            <span class="text-sm text-gray-400 block font-mono" dir="ltr">${q.phone}</span>
                            ${createdTimeHTML}
@@ -807,8 +824,16 @@
                      </div>
                      
                      <div class="flex flex-wrap md:flex-nowrap items-center justify-center gap-1 bg-gray-900 p-1.5 rounded-xl border border-gray-700 shrink-0 relative z-10 shadow-inner">
+                       <button onclick="openWhatsAppMenu('${q.phone}', '${customerNameDisplay}', ${idx}); event.stopPropagation();" class="text-green-400 hover:text-green-300 hover:bg-green-500/10 p-2 rounded-lg transition" title="مراسلة واتساب احترافية">
+                         <i data-lucide="message-circle" class="w-5 h-5"></i>
+                       </button>
+                       <div class="w-px h-6 bg-gray-700 mx-1"></div>
                        <button data-action="swap-with-top" data-id="${q.id}" class="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 p-2 rounded-lg transition disabled:opacity-30 flex items-center gap-1 text-xs font-bold" title="إدخال كبديل للدور الأول" ${isFirst ? 'disabled' : ''}>
                          <i data-lucide="arrow-up-to-line" class="w-5 h-5"></i> بديل
+                       </button>
+                       <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                       <button data-action="move-tomorrow" data-id="${q.id}" data-date="${q.bookingDate}" class="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 p-2 rounded-lg transition flex items-center gap-1 text-xs font-bold" title="نقل ليكون أول دور في يوم غد">
+                         <i data-lucide="calendar-check-2" class="w-5 h-5"></i> للغد
                        </button>
                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
                        <button data-action="move-up" data-idx="${idx}" class="text-gray-400 hover:text-amber-500 hover:bg-gray-800 p-2 rounded-lg transition disabled:opacity-30" title="تقديم الدور" ${isFirst ? 'disabled' : ''}>
@@ -910,7 +935,7 @@
                   <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
                   <td class="p-3">
                      <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <a href="https://wa.me/${c.phone.replace(/[^0-9]/g, '')}" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب" onclick="event.stopPropagation();"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
+                        <button onclick="openWhatsAppMenu('${c.phone}', '${c.name || ''}', null); event.stopPropagation();" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب"><i data-lucide="message-circle" class="w-4 h-4"></i></button>
                         <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال" onclick="event.stopPropagation();"><i data-lucide="phone" class="w-4 h-4"></i></a>
                         <button data-action="${isBanned ? 'unban-db-customer' : 'ban-db-customer'}" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="${isBanned ? 'إلغاء الحظر' : 'حظر العميل'}" onclick="event.stopPropagation();"><i data-lucide="${isBanned ? 'shield-check' : 'shield-ban'}" class="w-4 h-4"></i></button>
                         <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500 hover:text-white p-2 rounded-lg transition" title="حذف من السجل نهائياً" onclick="event.stopPropagation();"><i data-lucide="trash" class="w-4 h-4"></i></button>
@@ -971,17 +996,9 @@
                    <label class="block text-gray-400 text-xs font-bold mb-1.5">رقم الهاتف (اختياري)</label>
                    <input type="tel" id="admin-add-phone" value="${state.adminAdd.phone}" placeholder="010..." class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition" dir="ltr">
                  </div>
-                 <div class="flex gap-4">
-                    <div class="flex-1">
-                       <label class="block text-gray-400 text-xs font-bold mb-1.5">تاريخ الحجز</label>
-                       <input type="date" id="admin-add-date" min="${today}" value="${state.adminAdd.date || today}" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none cursor-pointer">
-                    </div>
-                    <div class="flex-1">
-                       <label class="block text-gray-400 text-xs font-bold mb-1.5">وقت الحضور</label>
-                       <select id="admin-add-time" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none cursor-pointer">
-                          <option value="">اختر الوقت...</option>
-                       </select>
-                    </div>
+                 <div>
+                    <label class="block text-gray-400 text-xs font-bold mb-1.5">تاريخ الحجز</label>
+                    <input type="date" id="admin-add-date" min="${today}" value="${state.adminAdd.date || today}" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none cursor-pointer">
                  </div>
               </div>
 
@@ -1075,7 +1092,7 @@
                     <div><span class="text-gray-500 text-xs block mb-1">رابط الصالون:</span> <span class="text-blue-400 font-mono text-sm block bg-gray-900 p-2 rounded" dir="ltr">${baseUrl}?shop=${state.shopId}</span></div>
                     <div><span class="text-gray-500 text-xs block mb-1">تاريخ انتهاء الاشتراك:</span> <span class="text-white font-bold">${new Date(state.shopState.subscriptionEnd).toLocaleDateString('ar-EG')}</span></div>
                  </div>
-                 <h4 class="text-amber-500 font-bold mt-4 mb-2 text-sm flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> أوقات العمل</h4>
+                 <h4 class="text-amber-500 font-bold mt-4 mb-2 text-sm flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> أوقات العمل (تظهر للعملاء فقط)</h4>
                  <div class="flex gap-4 mb-4">
                     <div class="flex-1 bg-gray-950 border border-gray-700 rounded-xl p-3 flex flex-col gap-1">
                        <span class="text-xs text-gray-500 font-bold">من</span>
@@ -1109,7 +1126,7 @@
               </div>
               
               <div class="flex flex-col gap-3">
-                 ${(activeTicket || state.shopState.timerEndTime > Date.now()) ? `
+                 ${(activeTicket || state.shopState.timerEndTime > getTrueTime()) ? `
                    <button data-action="end-current" class="text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white py-3 rounded-xl border border-gray-700 transition font-bold">إنهاء الدور وإخلاء الكرسي فقط</button>
                    <button data-action="end-and-next" class="text-base bg-amber-500 text-gray-900 hover:bg-amber-400 py-4 rounded-xl transition font-black shadow-lg flex items-center justify-center gap-2"><i data-lucide="check-check" class="w-5 h-5"></i> إنهاء وبدء الدور التالي فوراً</button>
                  ` : '<div class="text-gray-600 text-sm py-2">الكرسي فارغ حالياً</div>'}
@@ -1139,9 +1156,12 @@
                      <button data-action="admin-switch-tab" data-tab="waiting" class="flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${state.adminViewTab === 'waiting' ? 'bg-amber-500 text-gray-900 shadow' : 'text-gray-400 hover:text-white'}">الانتظار (${waitingQueue.length})</button>
                      <button data-action="admin-switch-tab" data-tab="completed" class="flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${state.adminViewTab === 'completed' ? 'bg-gray-700 text-white shadow' : 'text-gray-400 hover:text-white'}">السجل (${completedQueue.length})</button>
                   </div>
-                  <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700">
-                     <i data-lucide="calendar-days" class="w-5 h-5 text-amber-500"></i>
-                     <input type="month" id="admin-month-filter" value="${state.adminSelectedMonth}" class="bg-transparent text-white outline-none text-sm font-bold cursor-pointer" />
+                  <div class="flex items-center gap-2">
+                     ${state.adminViewTab === 'waiting' ? `<button data-action="auto-sort-presence" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"><i data-lucide="arrow-down-up" class="w-4 h-4"></i> ترتيب المتواجدين</button>` : ''}
+                     <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700">
+                        <i data-lucide="calendar-days" class="w-5 h-5 text-amber-500"></i>
+                        <input type="month" id="admin-month-filter" value="${state.adminSelectedMonth}" class="bg-transparent text-white outline-none text-sm font-bold cursor-pointer" />
+                     </div>
                   </div>
                </div>
 
@@ -1155,7 +1175,7 @@
             </div>
           </div>
           
-          <div class="bg-gray-900 rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
+          <div class="bg-gray-900 rounded-3xl border border-gray-800 overflow-hidden shadow-2xl mt-6">
              <div class="p-6 border-b border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-900/80">
                 <h3 class="text-xl font-bold text-white flex items-center gap-2">
                    <i data-lucide="database" class="w-6 h-6 text-amber-500"></i> قاعدة بيانات العملاء 
@@ -1167,26 +1187,28 @@
                 </div>
              </div>
              <div class="overflow-x-auto">
-                <table class="w-full text-right border-collapse min-w-[600px]">
-                   <thead>
-                      <tr class="bg-gray-950 text-gray-500 text-xs font-bold border-b border-gray-800">
-                         <th class="p-4 w-1/4">الاسم</th>
-                         <th class="p-4 w-1/4">رقم الهاتف</th>
-                         <th class="p-4 w-1/6 text-center">إجمالي الزيارات</th>
-                         <th class="p-4 w-1/4">تاريخ آخر زيارة</th>
-                         <th class="p-4 w-auto">إجراءات</th>
-                      </tr>
-                   </thead>
-                   <tbody id="db-table-body">
-                      ${dbRowsHTML}
-                   </tbody>
-                </table>
+                <div class="max-h-[320px] overflow-y-auto custom-scrollbar relative">
+                    <table class="w-full text-right border-collapse min-w-[600px]">
+                       <thead class="sticky top-0 bg-gray-950 z-10 shadow-sm">
+                          <tr class="text-gray-500 text-xs font-bold border-b border-gray-800">
+                             <th class="p-4 w-1/4">الاسم</th>
+                             <th class="p-4 w-1/4">رقم الهاتف</th>
+                             <th class="p-4 w-1/6 text-center">إجمالي الزيارات</th>
+                             <th class="p-4 w-1/4">تاريخ آخر زيارة</th>
+                             <th class="p-4 w-auto">إجراءات</th>
+                          </tr>
+                       </thead>
+                       <tbody id="db-table-body">
+                          ${dbRowsHTML}
+                       </tbody>
+                    </table>
+                </div>
              </div>
           </div>
         </div>
       `;
       lucide.createIcons();
-      updateBookingTimes();
+      updateWaitingCount();
     };
 
     const renderCustomerBooking = () => {
@@ -1196,7 +1218,9 @@
       const isReturning = state.customerRecord && state.customerRecord.visitCount > 0;
       
       const tempDate = state.tempBookingDate || today;
-      const waitingCountDate = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === tempDate).length;
+      const waitingQueueForDate = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === tempDate);
+      const waitingCountDate = waitingQueueForDate.length;
+      const presentCountDate = waitingQueueForDate.filter(q => q.presenceStatus === 'here').length;
       const dateLabel = (tempDate === today) ? 'اليوم' : tempDate;
       
       const showForm = !isReturning || state.showNewBookingForm;
@@ -1235,14 +1259,18 @@
                   <i data-lucide="users" class="w-4 h-4"></i>
                   منتظرين (<span id="waiting-date-label">${dateLabel}</span>): <span id="waiting-count-label" class="text-xl font-black bg-amber-500 text-gray-900 px-2 rounded ml-1">${waitingCountDate}</span>
                </p>
-               <p class="text-gray-400 text-xs">احجز موعدك الآن حتى لو كان الصالون مغلقاً.</p>
+               <p class="text-green-400 font-bold text-xs flex items-center justify-center gap-1 mt-2">
+                  <i data-lucide="map-pin" class="w-3 h-3"></i>
+                  متواجدون بالصالون حالياً: <span id="present-count-label" class="bg-green-500/20 px-1.5 border border-green-500/30 rounded">${presentCountDate}</span>
+               </p>
+               <p class="text-gray-400 text-[10px] mt-2">احجز دورك الآن حتى لو كان الصالون مغلقاً.</p>
             </div>
          </div>
       `;
 
       if (isReturning && !showForm) {
          const lastV = new Date(state.customerRecord.lastVisitDate);
-         const diffDays = Math.floor((new Date() - lastV) / (1000 * 60 * 60 * 24));
+         const diffDays = Math.floor((getTrueTime() - lastV) / (1000 * 60 * 60 * 24));
          const exactDateStr = lastV.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
          
          contentHTML += getPersonalGalleryHTML();
@@ -1277,7 +1305,7 @@
                  <div class="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 transition"></div>
                  <i data-lucide="calendar-plus" class="w-10 h-10 text-amber-500 mx-auto mb-3 group-hover:scale-110 transition duration-300"></i>
                  <h3 class="text-xl font-bold text-white mb-2">شيك للحجز واستخراج دور جديد</h3>
-                 <p class="text-gray-400 text-sm">اضغط هنا لفحص المواعيد المتاحة وتسجيل طلبك.</p>
+                 <p class="text-gray-400 text-sm">اضغط هنا لفحص الأيام المتاحة وتسجيل طلبك.</p>
               </div>
             </div>
          `;
@@ -1303,18 +1331,13 @@
               <h3 class="text-lg font-bold text-amber-500 mb-4 flex items-center gap-2">
                 <i data-lucide="calendar" class="w-5 h-5"></i> متى ترغب في الحضور؟ <span class="text-red-500">*</span>
               </h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-4">
                 <div>
-                  <label class="block text-gray-400 text-sm mb-2 font-bold">تاريخ الحجز</label>
+                  <label class="block text-gray-400 text-sm mb-2 font-bold">اختر تاريخ الحجز (باليوم)</label>
                   <input type="date" id="input-booking-date" value="${state.tempBookingDate || today}" min="${today}" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition cursor-pointer" required>
                 </div>
-                <div>
-                  <label class="block text-gray-400 text-sm mb-2 font-bold">وقت الحضور المتاح</label>
-                  <select id="input-booking-time" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition cursor-pointer" required>
-                  </select>
-                </div>
               </div>
-              <p class="text-xs text-gray-500 mt-3"><i data-lucide="info" class="w-3 h-3 inline"></i> المواعيد المحجوزة مسبقاً من قِبل عملاء آخرين مخفية تلقائياً لراحتك.</p>
+              <p class="text-xs text-gray-500 mt-3"><i data-lucide="info" class="w-3 h-3 inline"></i> يتم إعطائك رقم دور متسلسل لليوم الذي تختاره بناءً على أسبقية الحجز.</p>
             </div>
 
             <div class="mb-8">
@@ -1353,7 +1376,7 @@
       initSlider();
       if(showForm) {
          if(!state.tempBookingDate) state.tempBookingDate = today;
-         setTimeout(updateBookingTimes, 0); 
+         setTimeout(updateWaitingCount, 0); 
       }
     };
 
@@ -1390,7 +1413,7 @@
                <p class="text-lg text-gray-300 mb-8">نتمنى أن تكون قصة شعرك قد نالت إعجابك.</p>
                ${ratingUI}
                <div class="mt-8 pt-6 border-t border-gray-800">
-                 <button id="btn-change-account-link" data-action="logout-link" class="text-gray-500 hover:text-amber-500 underline text-sm">العودة للرئيسية לחجز موعد جديد</button>
+                 <button id="btn-change-account-link" data-action="logout-link" class="text-gray-500 hover:text-amber-500 underline text-sm">العودة للرئيسية لحجز موعد جديد</button>
                </div>
             </div>
          `;
@@ -1420,40 +1443,27 @@
       const myIndex = sameDayWaiting.findIndex(q => q.id === state.myTicket.id);
       const myPosition = myIndex !== -1 ? myIndex + 1 : 0;
       
-      const isUrgentTimer = state.timeLeft <= 300000 && state.timeLeft > 0;
-      const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
-
       const activeTicket = state.queue.find(q => q.status === 'active');
       const tNum = state.myTicket.ticketNumber;
       const cNum = activeTicket ? activeTicket.ticketNumber : '--';
 
-      const now = new Date();
-      const currentH = now.getHours();
-      const currentM = now.getMinutes();
-      let isTimeClose = true;
+      const isUrgentTimer = state.timeLeft <= 300000 && state.timeLeft > 0;
+      const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
       const today = new Date().toISOString().split('T')[0];
-
-      if(state.myTicket.bookingTime && state.myTicket.bookingDate === today) {
-          const [bH, bM] = state.myTicket.bookingTime.split(':').map(Number);
-          const bookingTotalMins = bH * 60 + bM;
-          const currentTotalMins = currentH * 60 + currentM;
-          if (bookingTotalMins - currentTotalMins > 60) {
-              isTimeClose = false;
-          }
-      }
+      const isToday = state.myTicket.bookingDate === today;
 
       let posHTML = '';
       if (myPosition === 1) {
-         if(isTimeClose) posHTML = `<span class="text-green-400 bg-green-400/10 px-4 py-1.5 rounded-full border border-green-400/30 font-bold shadow-sm">أنت الدور القادم! استعد يا ${state.customerName}</span>`;
-         else posHTML = `<span class="text-blue-400 bg-blue-400/10 px-4 py-1.5 rounded-full border border-blue-400/30 font-bold shadow-sm">أنت الدور الأول لموعدك اللاحق اليوم (${state.myTicket.bookingTime})</span>`;
+         if(isToday) posHTML = `<span class="text-green-400 bg-green-400/10 px-4 py-1.5 rounded-full border border-green-400/30 font-bold shadow-sm">أنت الدور القادم! استعد يا ${state.customerName}</span>`;
+         else posHTML = `<span class="text-blue-400 bg-blue-400/10 px-4 py-1.5 rounded-full border border-blue-400/30 font-bold shadow-sm">أنت الدور الأول ليوم (${state.myTicket.bookingDate})</span>`;
       } else if (myPosition > 1) {
-         posHTML = `<span class="text-lg">يوجد قبلك <span class="text-amber-500 font-black text-2xl mx-1">${myPosition - 1}</span> أشخاص لليوم</span>`;
+         posHTML = `<span class="text-lg">يوجد قبلك <span class="text-amber-500 font-black text-2xl mx-1">${myPosition - 1}</span> أشخاص</span>`;
       } else {
          posHTML = `<span class="text-gray-500">جاري الحساب...</span>`;
       }
 
       let warningCardHTML = '';
-      if (is10MinWarning && isTimeClose && state.myTicket.presenceStatus !== 'here') {
+      if (is10MinWarning && isToday && state.myTicket.presenceStatus !== 'here') {
         warningCardHTML = `
           <div id="warning-10min" class="bg-gradient-to-r from-amber-600 to-red-600 p-6 rounded-2xl shadow-2xl mb-6 border-2 border-white/20 animate-fade-in-down relative overflow-hidden">
              <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
@@ -1509,9 +1519,9 @@
         `;
       }
 
-      let bookingInfo = (state.myTicket.bookingDate && state.myTicket.bookingTime) ? 
-          `<div class="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-4 py-2 rounded-xl mb-6 font-bold flex flex-col sm:flex-row items-center justify-between gap-2">
-             <span class="flex items-center gap-2"><i data-lucide="calendar-clock" class="w-5 h-5"></i> موعدك: ${state.myTicket.bookingDate} الساعة ${state.myTicket.bookingTime}</span>
+      let bookingInfo = state.myTicket.bookingDate ? 
+          `<div class="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-4 py-3 rounded-xl mb-6 font-bold flex flex-col sm:flex-row items-center justify-between gap-3">
+             <span class="flex items-center gap-2"><i data-lucide="calendar-check-2" class="w-5 h-5"></i> يوم حجزك هو: ${state.myTicket.bookingDate}</span>
              <button data-action="customer-cancel-booking" class="bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg text-sm transition font-bold border border-red-500/30 flex items-center gap-1"><i data-lucide="x-circle" class="w-4 h-4"></i> إلغاء الحجز</button>
            </div>` : '';
 
@@ -1541,7 +1551,7 @@
           
           <div class="text-center bg-gray-800/50 p-4 rounded-xl border border-gray-700/50">
             <p class="text-gray-400 mb-2 flex items-center justify-center gap-2 font-bold">
-              <i data-lucide="list-ordered" class="w-5 h-5 text-gray-500"></i> ترتيبك الحالي في انتظار اليوم
+              <i data-lucide="list-ordered" class="w-5 h-5 text-gray-500"></i> ترتيبك الحالي في انتظار نفس اليوم
             </p>
             <div class="mt-2">
               ${posHTML}
@@ -1549,9 +1559,9 @@
           </div>
         </div>
 
-        ${(activeTicket || state.shopState.timerEndTime > Date.now()) ? `
+        ${(activeTicket || state.shopState.timerEndTime > getTrueTime()) ? `
           <div class="mt-6 p-8 rounded-3xl text-center border shadow-xl relative overflow-hidden transition-all duration-1000 ${isUrgentTimer ? 'bg-red-900/20 border-red-500/50 animate-pulse' : 'bg-gray-900 border-amber-500/30'}">
-            ${(myPosition === 1 && state.timeLeft > 0 && isTimeClose) ? `
+            ${(myPosition === 1 && state.timeLeft > 0 && isToday) ? `
               <div class="absolute top-0 left-0 w-full bg-amber-500 text-gray-900 font-bold py-2 text-sm">
                 بإحترافية: يمكنك الانتظار حالياً في المكان، أمامك من الوقت تقريباً ليفرغ الكرسي:
               </div>
@@ -1601,7 +1611,7 @@
              return;
           }
 
-          const subscriptionEnd = Date.now() + (14 * 24 * 60 * 60 * 1000); // 14 Days Free Trial
+          const subscriptionEnd = getTrueTime() + (14 * 24 * 60 * 60 * 1000); // 14 Days Free Trial
           
           await setDoc(shopDocRef, {
              ownerId: ownerId,
@@ -1768,18 +1778,48 @@
                if(ok) {
                   const tempTicket = topCust.ticketNumber;
                   const tempDate = topCust.bookingDate;
-                  const tempTime = topCust.bookingTime;
 
                   await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', topCust.id), {
-                     ticketNumber: thisCust.ticketNumber, bookingDate: thisCust.bookingDate, bookingTime: thisCust.bookingTime
+                     ticketNumber: thisCust.ticketNumber, bookingDate: thisCust.bookingDate
                   });
                   await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', thisCust.id), {
-                     ticketNumber: tempTicket, bookingDate: tempDate, bookingTime: tempTime, presenceStatus: 'here' 
+                     ticketNumber: tempTicket, bookingDate: tempDate, presenceStatus: 'here' 
                   });
                }
             }
          } else {
              customAlert("هذا العميل هو بالفعل في الدور الأول.");
+         }
+      }
+
+      // --- نقل للغد ---
+      if (action === 'move-tomorrow') {
+         const id = target.getAttribute('data-id');
+         const currentDateStr = target.getAttribute('data-date');
+         if(!id || !currentDateStr) return;
+
+         const ok = await customConfirm("هل تريد نقل هذا العميل ليكون أول دور في يوم غد؟");
+         if(ok) {
+             const d = new Date(currentDateStr);
+             d.setDate(d.getDate() + 1);
+             const tomorrowStr = d.toISOString().split('T')[0];
+
+             const tomorrowQueue = state.queue.filter(q => q.bookingDate === tomorrowStr && q.status === 'waiting');
+
+             // Shift everyone tomorrow down by 1
+             for (let tq of tomorrowQueue) {
+                 await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', tq.id), {
+                     ticketNumber: (tq.ticketNumber || 0) + 1
+                 });
+             }
+
+             // Move this user to tomorrow as ticket 1
+             await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', id), {
+                 bookingDate: tomorrowStr,
+                 ticketNumber: 1,
+                 presenceStatus: null // reset presence
+             });
+             customAlert("تم نقل العميل للغد بنجاح.");
          }
       }
 
@@ -1793,24 +1833,51 @@
          if (action === 'move-up' && idx > 0) {
             const current = waitingQueue[idx];
             const previous = waitingQueue[idx - 1];
+            
+            // Swap ONLY the ticket numbers
             await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', current.id), {
-               ticketNumber: previous.ticketNumber, bookingDate: previous.bookingDate, bookingTime: previous.bookingTime
+               ticketNumber: previous.ticketNumber
             });
             await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', previous.id), {
-               ticketNumber: current.ticketNumber, bookingDate: current.bookingDate, bookingTime: current.bookingTime
+               ticketNumber: current.ticketNumber
             });
          }
          
          if (action === 'move-down' && idx < waitingQueue.length - 1) {
             const current = waitingQueue[idx];
             const next = waitingQueue[idx + 1];
+            
+            // Swap ONLY the ticket numbers
             await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', current.id), {
-               ticketNumber: next.ticketNumber, bookingDate: next.bookingDate, bookingTime: next.bookingTime
+               ticketNumber: next.ticketNumber
             });
             await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', next.id), {
-               ticketNumber: current.ticketNumber, bookingDate: current.bookingDate, bookingTime: current.bookingTime
+               ticketNumber: current.ticketNumber
             });
          }
+      }
+      
+      // --- ترتيب المتواجدين تلقائياً ---
+      if (action === 'auto-sort-presence') {
+          const ok = await customConfirm("هل تريد إعادة ترتيب القائمة ليكون المتواجدون بالصالون في الأعلى؟");
+          if (ok) {
+              const waitingQueue = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
+              const present = waitingQueue.filter(q => q.presenceStatus === 'here');
+              const absent = waitingQueue.filter(q => q.presenceStatus !== 'here');
+              
+              const newOrder = [...present, ...absent];
+              
+              let currentTicket = 1;
+              for (let item of newOrder) {
+                  if (item.ticketNumber !== currentTicket) {
+                      await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', item.id), {
+                          ticketNumber: currentTicket
+                      });
+                  }
+                  currentTicket++;
+              }
+              customAlert("تم ترتيب القائمة بنجاح.");
+          }
       }
 
       if (action === 'trigger-portfolio-upload') {
@@ -1870,7 +1937,7 @@
            if(waitingQueue.length > 0) {
               const nextCust = waitingQueue[0];
               await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', nextCust.id), { status: 'active', adminMessage: 'تفضل، دورك الآن!' });
-              await updateDoc(shopRef, { currentTicket: nextCust.ticketNumber, timerEndTime: Date.now() + (30 * 60 * 1000) }); 
+              await updateDoc(shopRef, { currentTicket: nextCust.ticketNumber, timerEndTime: getTrueTime() + (30 * 60 * 1000) }); 
            } else {
               await updateDoc(shopRef, { timerEndTime: 0, currentTicket: 0 });
               customAlert("تم الإنهاء، ولا يوجد عملاء آخرين في انتظار هذا اليوم.");
@@ -1932,6 +1999,13 @@
          }
       }
 
+      // Toggle Presence From Admin Menu
+      if (action === 'admin-toggle-presence') {
+         const id = target.getAttribute('data-id');
+         const newStatus = target.getAttribute('data-status');
+         await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', id), { presenceStatus: newStatus });
+      }
+
       if (action === 'delete-customer') {
         const ok = await customConfirm('هل أنت متأكد من إلغاء وحذف هذا الحجز نهائياً من القائمة؟');
         if(ok) {
@@ -1950,7 +2024,7 @@
       }
 
       if (action === 'customer-cancel-booking') {
-        const ok = await customConfirm('هل أنت متأكد من رغبتك في إلغاء حجزك بالكامل؟');
+        const ok = await customConfirm('هل أنت متأكد من رغبتك في إلغاء حجزك بالكامل؟ بمجرد الإلغاء وحجز دور جديد ستحصل على رقم جديد في نهاية القائمة.');
         if(ok && state.myTicket) {
            await deleteDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', state.myTicket.id));
            state.myTicket = null;
@@ -1970,7 +2044,7 @@
                await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', active.id), { status: 'completed' });
             }
             await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', id), { status: 'active' });
-            await updateDoc(shopRef, { currentTicket: customer.ticketNumber, timerEndTime: Date.now() + (time * 60 * 1000) });
+            await updateDoc(shopRef, { currentTicket: customer.ticketNumber, timerEndTime: getTrueTime() + (time * 60 * 1000) });
          }
       }
 
@@ -1994,15 +2068,8 @@
         const nameInput = document.getElementById('admin-add-name').value.trim();
         const phoneInput = document.getElementById('admin-add-phone').value.trim() || 'بدون رقم';
         const dateInput = document.getElementById('admin-add-date').value;
-        const timeInput = document.getElementById('admin-add-time').value;
 
         if (!nameInput) return customAlert("برجاء إدخال اسم العميل أولاً.");
-        
-        const conflictExists = state.queue.find(q => q.bookingDate === dateInput && q.bookingTime === timeInput && (q.status === 'waiting' || q.status === 'active'));
-        if (conflictExists && dateInput && timeInput) {
-            const ok = await customConfirm("تحذير: هذا الموعد محجوز مسبقاً من قِبل عميل آخر! هل تريد إضافته على أي حال؟");
-            if(!ok) return;
-        }
         
         const queueForDate = state.queue.filter(q => q.bookingDate === dateInput);
         const maxTicket = queueForDate.length > 0 ? Math.max(...queueForDate.map(q => q.ticketNumber || 0)) : 0;
@@ -2010,8 +2077,8 @@
 
         await addDoc(collection(db, ROOT_COLLECTION, state.shopId, 'queue'), {
           phone: phoneInput, name: nameInput, ticketNumber: ticketNum, status: 'waiting', adminMessage: null, presenceStatus: 'here', 
-          bookingDate: dateInput, bookingTime: timeInput, selectedServices: state.adminAdd.services, selectedProducts: state.adminAdd.products, timestamp: serverTimestamp(),
-          deviceId: localDeviceId
+          bookingDate: dateInput, selectedServices: state.adminAdd.services, selectedProducts: state.adminAdd.products, timestamp: serverTimestamp(),
+          deviceId: localDeviceId // Save Device ID for ban system
         });
 
         if (phoneInput !== 'بدون رقم') {
@@ -2022,7 +2089,7 @@
             }
         }
 
-        state.adminAdd = { name: '', phone: '', date: '', time: '', services: [], products: [] };
+        state.adminAdd = { name: '', phone: '', date: '', services: [], products: [] };
         customAlert(`تم إضافة العميل بنجاح. رقم الدور: ${ticketNum}`);
         
         document.getElementById('quick-add-area').classList.add('hidden');
@@ -2095,23 +2162,26 @@
       if (action === 'book-ticket') {
         if (!state.customerPhone || !state.customerName) return;
         
+        // منع حجز دور لرقم آخر من نفس الجهاز إذا كان لديه دور نشط/بالانتظار
+        const activeDeviceTickets = state.queue.filter(q => q.deviceId === localDeviceId && (q.status === 'waiting' || q.status === 'active'));
+        const otherPhoneTicket = activeDeviceTickets.find(q => q.phone !== state.customerPhone);
+        if (otherPhoneTicket) {
+            return customAlert(`عفواً، لديك حجز مسبق ونشط من هذا الجهاز للرقم: ${otherPhoneTicket.phone}. لا يمكنك حجز أكثر من دور لأشخاص مختلفين لضمان الشفافية وعدم التلاعب.`);
+        }
+
         // Cooldown Check
         if(!checkCooldown()) return;
 
         const bDate = document.getElementById('input-booking-date')?.value;
-        const bTime = document.getElementById('input-booking-time')?.value;
         
-        if (!bDate || !bTime) return customAlert("يرجى اختيار تاريخ ووقت الحجز أولاً.");
-
-        const conflictExists = state.queue.find(q => q.bookingDate === bDate && q.bookingTime === bTime && (q.status === 'waiting' || q.status === 'active'));
-        if (conflictExists) return customAlert("عذراً، هذا الموعد محجوز مسبقاً من عميل آخر. برجاء اختيار وقت أو تاريخ مختلف.");
+        if (!bDate) return customAlert("يرجى اختيار تاريخ الحجز أولاً.");
         
         const queueForDate = state.queue.filter(q => q.bookingDate === bDate);
         const maxTicket = queueForDate.length > 0 ? Math.max(...queueForDate.map(q => q.ticketNumber || 0)) : 0;
         const ticketNum = maxTicket + 1;
 
         await addDoc(collection(db, ROOT_COLLECTION, state.shopId, 'queue'), {
-          phone: state.customerPhone, name: state.customerName, ticketNumber: ticketNum, bookingDate: bDate, bookingTime: bTime,
+          phone: state.customerPhone, name: state.customerName, ticketNumber: ticketNum, bookingDate: bDate,
           status: 'waiting', adminMessage: null, presenceStatus: null, selectedServices: state.selectedServices, selectedProducts: state.selectedProducts, timestamp: serverTimestamp(),
           deviceId: localDeviceId // Save Device ID for ban system
         });
@@ -2124,7 +2194,6 @@
 
         updateURLWithPhone();
         state.tempBookingDate = '';
-        state.tempBookingTime = '';
         state.showNewBookingForm = false; 
       }
 
@@ -2132,7 +2201,7 @@
         const ok = await customConfirm("هل تريد العودة للرئيسية وتسجيل الخروج؟");
         if(ok) {
            sessionStorage.removeItem('saasAdminShop'); // Clear admin session
-           state.role = null; state.customerPhone = ''; state.customerName = ''; state.myTicket = null; state.customerRecord = null; state.showNewBookingForm = false; state.tempBookingDate = ''; state.tempBookingTime = '';
+           state.role = null; state.customerPhone = ''; state.customerName = ''; state.myTicket = null; state.customerRecord = null; state.showNewBookingForm = false; state.tempBookingDate = '';
            updateURLWithPhone();
            updateViewVisibility();
         }
@@ -2210,7 +2279,7 @@
        if (e.target.id === 'portfolio-file-input' && shopRef) handleCustomerImageUpload(e.target);
        if (e.target.id === 'input-booking-date') {
            state.tempBookingDate = e.target.value;
-           updateBookingTimes();
+           updateWaitingCount();
        }
     });
 
@@ -2378,7 +2447,7 @@
         if (docSnap.exists()) {
           const data = docSnap.data();
           
-          if (data.subscriptionEnd && data.subscriptionEnd < Date.now()) {
+          if (data.subscriptionEnd && data.subscriptionEnd < getTrueTime()) {
              state.isSubscriptionExpired = true;
           } else {
              state.isSubscriptionExpired = false;
@@ -2399,10 +2468,11 @@
       unsubQueue = onSnapshot(queueCol, (snapshot) => {
         const qData = [];
         snapshot.forEach(doc => qData.push({ id: doc.id, ...doc.data() }));
+        
+        // Sorting Only by Date and then sequentially by Ticket Number
         qData.sort((a, b) => {
            if (a.bookingDate && b.bookingDate && a.bookingDate !== b.bookingDate) return a.bookingDate.localeCompare(b.bookingDate);
-           if (a.bookingTime && b.bookingTime && a.bookingTime !== b.bookingTime) return a.bookingTime.localeCompare(b.bookingTime);
-           return a.ticketNumber - b.ticketNumber;
+           return (a.ticketNumber || 0) - (b.ticketNumber || 0);
         });
         
         state.queue = qData;
@@ -2421,8 +2491,8 @@
             const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
             qData.forEach(async (q) => {
                if (q.status === 'completed' && q.timestamp) {
-                   const ticketTime = q.timestamp.toMillis ? q.timestamp.toMillis() : Date.now();
-                   if (Date.now() - ticketTime > THIRTY_DAYS_MS) {
+                   const ticketTime = q.timestamp.toMillis ? q.timestamp.toMillis() : getTrueTime();
+                   if (getTrueTime() - ticketTime > THIRTY_DAYS_MS) {
                        try { await deleteDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', q.id)); } catch(e){}
                    }
                }
@@ -2452,7 +2522,7 @@
       if (timerInterval) clearInterval(timerInterval);
       const tick = () => {
         if (state.shopState.timerEndTime > 0) {
-          const remaining = state.shopState.timerEndTime - Date.now();
+          const remaining = state.shopState.timerEndTime - getTrueTime();
           state.timeLeft = remaining > 0 ? remaining : 0;
         } else state.timeLeft = 0;
         
