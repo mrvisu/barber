@@ -820,7 +820,7 @@
                      </div>
                      
                      <div class="flex flex-wrap md:flex-nowrap items-center justify-center gap-1 bg-gray-900 p-1.5 rounded-xl border border-gray-700 shrink-0 relative z-10 shadow-inner">
-                       <button onclick="openWhatsAppMenu('${q.phone}', '${customerNameDisplay}', ${idx}); event.stopPropagation();" class="text-green-400 hover:text-green-300 hover:bg-green-500/10 p-2 rounded-lg transition" title="مراسلة واتساب احترافية">
+                       <button onclick="openWhatsAppMenu('${q.phone}', '${customerNameDisplay}', ${idx});" class="text-green-400 hover:text-green-300 hover:bg-green-500/10 p-2 rounded-lg transition" title="مراسلة واتساب احترافية">
                          <i data-lucide="message-circle" class="w-5 h-5"></i>
                        </button>
                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
@@ -931,10 +931,10 @@
                   <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
                   <td class="p-3">
                      <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <button onclick="openWhatsAppMenu('${c.phone}', '${c.name || ''}', null); event.stopPropagation();" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب"><i data-lucide="message-circle" class="w-4 h-4"></i></button>
-                        <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال" onclick="event.stopPropagation();"><i data-lucide="phone" class="w-4 h-4"></i></a>
-                        <button data-action="${isBanned ? 'unban-db-customer' : 'ban-db-customer'}" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="${isBanned ? 'إلغاء الحظر' : 'حظر العميل'}" onclick="event.stopPropagation();"><i data-lucide="${isBanned ? 'shield-check' : 'shield-ban'}" class="w-4 h-4"></i></button>
-                        <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500 hover:text-white p-2 rounded-lg transition" title="حذف من السجل نهائياً" onclick="event.stopPropagation();"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                        <button onclick="openWhatsAppMenu('${c.phone}', '${c.name || ''}', null);" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white p-2 rounded-lg transition" title="واتساب"><i data-lucide="message-circle" class="w-4 h-4"></i></button>
+                        <a href="tel:${c.phone}" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white p-2 rounded-lg transition" title="اتصال"><i data-lucide="phone" class="w-4 h-4"></i></a>
+                        <button data-action="${isBanned ? 'unban-db-customer' : 'ban-db-customer'}" data-phone="${c.phone}" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition ml-2" title="${isBanned ? 'إلغاء الحظر' : 'حظر العميل'}"><i data-lucide="${isBanned ? 'shield-check' : 'shield-ban'}" class="w-4 h-4"></i></button>
+                        <button data-action="delete-db-customer" data-phone="${c.phone}" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500 hover:text-white p-2 rounded-lg transition" title="حذف من السجل نهائياً"><i data-lucide="trash" class="w-4 h-4"></i></button>
                      </div>
                   </td>
                </tr>
@@ -995,6 +995,13 @@
                  <div>
                     <label class="block text-gray-400 text-xs font-bold mb-1.5">تاريخ الحجز</label>
                     <input type="date" id="admin-add-date" min="${today}" value="${state.adminAdd.date || today}" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none cursor-pointer">
+                 </div>
+                 <div>
+                    <label class="block text-gray-400 text-xs font-bold mb-1.5">مكان الانتظار</label>
+                    <select id="admin-add-presence" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition cursor-pointer">
+                       <option value="here">متواجد داخل الصالون</option>
+                       <option value="outside">سينتظر بالخارج</option>
+                    </select>
                  </div>
               </div>
 
@@ -1438,53 +1445,26 @@
       const sameDayWaiting = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate);
       const myIndex = sameDayWaiting.findIndex(q => q.id === state.myTicket.id);
       const myPosition = myIndex !== -1 ? myIndex + 1 : 0;
+      const presentCountDate = sameDayWaiting.filter(q => q.presenceStatus === 'here').length;
       
       const activeTicket = state.queue.find(q => q.status === 'active');
       const tNum = state.myTicket.ticketNumber;
-      
-      const today = new Date().toISOString().split('T')[0];
-      const isToday = state.myTicket.bookingDate === today;
-
-      let cNumDisplay = '--';
-      let currentTicketNum = 0;
-
-      if (activeTicket) {
-         cNumDisplay = activeTicket.ticketNumber;
-         currentTicketNum = activeTicket.ticketNumber;
-      } else {
-         const todayCompleted = state.queue.filter(q => q.status === 'completed' && q.bookingDate === state.myTicket.bookingDate);
-         if (todayCompleted.length > 0) {
-            const maxCompleted = Math.max(...todayCompleted.map(q => q.ticketNumber || 0));
-            currentTicketNum = maxCompleted;
-            cNumDisplay = `<div class="flex flex-col items-center justify-center mt-1"><span class="text-4xl">${maxCompleted}</span><span class="text-[11px] text-gray-400 mt-1 font-normal">آخر دور منتهي</span></div>`;
-         } else {
-            cNumDisplay = `<span class="text-sm text-gray-500 font-normal">بانتظار البدء</span>`;
-         }
-      }
-
-      const ticketDiff = tNum - currentTicketNum;
-      
-      let posHTML = '';
-      if (myPosition === 1) {
-         if(isToday) posHTML = `<div class="w-full text-center text-green-400 bg-green-400/10 px-4 py-3 rounded-xl border border-green-400/30 font-bold shadow-sm">أنت الدور القادم! استعد يا ${state.customerName}</div>`;
-         else posHTML = `<div class="w-full text-center text-blue-400 bg-blue-400/10 px-4 py-3 rounded-xl border border-blue-400/30 font-bold shadow-sm">أنت الدور الأول ليوم (${state.myTicket.bookingDate})</div>`;
-      } else if (myPosition > 1) {
-         posHTML = `
-           <div class="px-2 w-1/2 text-center">
-              <p class="text-gray-400 text-xs mb-1">المنتظرين فعلياً قبلك</p>
-              <p class="text-3xl font-black text-amber-500">${myPosition - 1}</p>
-           </div>
-           <div class="px-2 w-1/2 text-center">
-              <p class="text-gray-400 text-xs mb-1">الأرقام المتبقية لدورك</p>
-              <p class="text-3xl font-black text-white">${ticketDiff > 0 ? ticketDiff : 0}</p>
-           </div>
-         `;
-      } else {
-         posHTML = `<div class="w-full text-center text-gray-500">جاري الحساب...</div>`;
-      }
+      const cNum = activeTicket ? activeTicket.ticketNumber : '--';
 
       const isUrgentTimer = state.timeLeft <= 300000 && state.timeLeft > 0;
       const is10MinWarning = state.timeLeft <= 600000 && state.timeLeft > 0 && myPosition === 1;
+      const today = new Date().toISOString().split('T')[0];
+      const isToday = state.myTicket.bookingDate === today;
+
+      let posHTML = '';
+      if (myPosition === 1) {
+         if(isToday) posHTML = `<div class="text-green-400 bg-green-400/10 px-4 py-2 rounded-xl border border-green-400/30 font-black shadow-sm flex items-center justify-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> أنت الدور القادم! استعد يا ${state.customerName}</div>`;
+         else posHTML = `<div class="text-blue-400 bg-blue-400/10 px-4 py-2 rounded-xl border border-blue-400/30 font-black shadow-sm flex items-center justify-center gap-2"><i data-lucide="calendar" class="w-5 h-5"></i> أنت الدور الأول ليوم (${state.myTicket.bookingDate})</div>`;
+      } else if (myPosition > 1) {
+         posHTML = `<div class="text-gray-400 text-sm font-bold flex items-center justify-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> يرجى متابعة الأرقام لضمان عدم تخطي دورك</div>`;
+      } else {
+         posHTML = `<span class="text-gray-500">جاري الحساب...</span>`;
+      }
 
       let warningCardHTML = '';
       if (is10MinWarning && isToday && state.myTicket.presenceStatus !== 'here') {
@@ -1562,23 +1542,24 @@
             ${bookingInfo}
           </div>
 
-          <div class="grid grid-cols-2 gap-4 relative z-10 mb-6">
+          <div class="grid grid-cols-2 gap-4 relative z-10 mb-4">
             <div class="text-center p-4 bg-gray-950 rounded-2xl border border-gray-800 shadow-inner flex flex-col justify-center items-center h-28">
-              <p class="text-gray-400 text-sm mb-1 font-bold">رقم دورك</p>
+              <p class="text-gray-400 text-sm mb-1 font-bold">رقمك التعريفي</p>
               <div class="text-5xl font-black text-amber-500 drop-shadow-md leading-none">${tNum}</div>
             </div>
-            <div class="text-center p-4 bg-gray-950 rounded-2xl border border-gray-800 shadow-inner flex flex-col justify-center items-center h-28">
-              <p class="text-gray-400 text-sm mb-1 font-bold whitespace-nowrap">الرقم بالداخل الآن</p>
-              <div class="font-black text-white drop-shadow-md leading-none w-full flex items-center justify-center ${activeTicket ? 'text-5xl' : ''}">${cNumDisplay}</div>
+            <div class="text-center p-4 bg-gray-950 rounded-2xl border border-amber-500/20 shadow-inner flex flex-col justify-center items-center h-28 relative overflow-hidden">
+               <div class="absolute inset-0 bg-amber-500/5"></div>
+               <p class="text-gray-400 text-sm mb-1 font-bold relative z-10">أمامك الآن (فعلياً)</p>
+               <div class="text-5xl font-black text-white drop-shadow-md leading-none relative z-10">${myPosition > 1 ? myPosition - 1 : 0}</div>
             </div>
           </div>
           
-          <div class="text-center bg-gray-800/50 p-5 rounded-xl border border-gray-700/50">
-            <p class="text-gray-300 font-bold text-sm mb-4 flex items-center justify-center gap-2"><i data-lucide="list-ordered" class="w-4 h-4 text-amber-500"></i> تفاصيل طابور الانتظار</p>
-            <div class="flex justify-around items-center divide-x divide-x-reverse divide-gray-700 w-full">
-              ${posHTML}
+          <div class="text-center bg-gray-800/80 p-4 rounded-xl border border-gray-700 shadow-md relative z-10">
+            ${posHTML}
+            <div class="mt-4 pt-4 border-t border-gray-700/50 flex justify-center items-center gap-2 flex-wrap">
+               <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+               <span class="text-gray-300 text-sm font-bold">العملاء المتواجدين بالصالون: <span class="text-green-400 font-black text-lg mx-1 px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded-md">${presentCountDate}</span> عميل</span>
             </div>
-            ${myPosition > 1 ? `<p class="text-[10px] text-gray-500 mt-4 leading-relaxed bg-gray-900/50 p-2 rounded-lg">(ملاحظة: الرقم الفعلي للمنتظرين يختلف عن الأرقام المتبقية بسبب تخطينا للعملاء الغير متواجدين، أو من قاموا بإلغاء دورهم).</p>` : ''}
           </div>
         </div>
 
@@ -1673,7 +1654,7 @@
     });
 
     document.addEventListener('click', async (e) => {
-      let target = e.target.closest('button, i[data-action], div[data-action], tr[data-action]'); 
+      let target = e.target.closest('button, a, i[data-action], div[data-action], tr[data-action]'); 
       if (!target) return;
       
       const action = target.getAttribute('data-action');
@@ -1915,6 +1896,10 @@
       }
 
       if (action === 'end-current' || action === 'end-and-next') {
+        const actionText = action === 'end-current' ? 'إنهاء الدور وإخلاء الكرسي' : 'إنهاء الدور والبدء مع العميل التالي';
+        const ok = await customConfirm(`هل أنت متأكد من ${actionText}؟`);
+        if(!ok) return;
+
         const activeTicket = state.queue.find(q => q.status === 'active');
         if(activeTicket) {
            await updateDoc(doc(db, ROOT_COLLECTION, state.shopId, 'queue', activeTicket.id), { status: 'completed' });
@@ -2074,6 +2059,7 @@
         const nameInput = document.getElementById('admin-add-name').value.trim();
         const phoneInput = document.getElementById('admin-add-phone').value.trim() || 'بدون رقم';
         const dateInput = document.getElementById('admin-add-date').value;
+        const presenceInput = document.getElementById('admin-add-presence')?.value || 'here';
 
         if (!nameInput) return customAlert("برجاء إدخال اسم العميل أولاً.");
         
@@ -2082,7 +2068,7 @@
         const ticketNum = maxTicket + 1;
 
         await addDoc(collection(db, ROOT_COLLECTION, state.shopId, 'queue'), {
-          phone: phoneInput, name: nameInput, ticketNumber: ticketNum, status: 'waiting', adminMessage: null, presenceStatus: 'here', 
+          phone: phoneInput, name: nameInput, ticketNumber: ticketNum, status: 'waiting', adminMessage: null, presenceStatus: presenceInput, 
           bookingDate: dateInput, selectedServices: state.adminAdd.services, selectedProducts: state.adminAdd.products, timestamp: serverTimestamp(),
           deviceId: localDeviceId // Save Device ID for ban system
         });
