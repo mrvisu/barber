@@ -1274,7 +1274,7 @@
         </div>
 
         <!-- Waiting Queue Area -->
-        <div class="flex flex-col h-[600px] md:max-h-[800px]">
+        <div class="flex flex-col h-[850px] md:h-[1200px]">
           <div class="bg-gray-900 rounded-t-2xl md:rounded-t-3xl p-4 md:p-5 border border-gray-800 border-b-0 shrink-0 z-20 shadow-lg">
              <div class="flex flex-col sm:flex-row justify-between items-center gap-3 md:gap-4 mb-4 md:mb-5 border-b border-gray-800 pb-4 md:pb-5">
                 <div class="flex bg-gray-950 p-1 md:p-1.5 rounded-lg md:rounded-xl border border-gray-800 w-full sm:w-auto shadow-inner">
@@ -2920,11 +2920,17 @@
         
         // Sorting Logic: 
         // 1. By Date
-        // 2. By Ticket Number (Strictly preserves the queue turns as requested)
+        // 2. By Presence (here -> outside)
+        // 3. By Ticket Number (Strictly preserves the queue turns as requested)
         qData.sort((a, b) => {
            if (a.bookingDate && b.bookingDate && a.bookingDate !== b.bookingDate) {
                return a.bookingDate.localeCompare(b.bookingDate);
            }
+           
+           // فرز المتواجدين بالصالون أولاً
+           if (a.presenceStatus === 'here' && b.presenceStatus !== 'here') return -1;
+           if (a.presenceStatus !== 'here' && b.presenceStatus === 'here') return 1;
+
            // الاعتماد الصارم على رقم الدور للحفاظ على ترتيب العملاء بدون تداخل
            return (a.ticketNumber || 0) - (b.ticketNumber || 0);
         });
@@ -2953,8 +2959,9 @@
 
           // --- Customer Next-in-line Notification ---
           if (state.role === 'customer' && state.myTicket && state.myTicket.status === 'waiting') {
-              const waitingBeforeMe = qData.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate && q.ticketNumber < state.myTicket.ticketNumber);
-              const myPosition = waitingBeforeMe.length + 1;
+              const sameDayWaiting = qData.filter(q => q.status === 'waiting' && q.bookingDate === state.myTicket.bookingDate);
+              const myIndex = sameDayWaiting.findIndex(q => q.id === state.myTicket.id);
+              const myPosition = myIndex !== -1 ? myIndex + 1 : 0;
               const today = new Date().toISOString().split('T')[0];
               const isToday = state.myTicket.bookingDate === today;
 
