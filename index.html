@@ -511,7 +511,8 @@
         products: ["جيل تصفيف", "كريم شعر", "زيت لحية"],
         gallery: DEFAULT_GALLERY,
         bannedPhones: [],
-        bannedDevices: []
+        bannedDevices: [],
+        lockedDates: [] // Array of 'YYYY-MM-DD' representing locked/fully booked days
       },
       queue: [],
       knownTicketIds: new Set(), // For audio notifications
@@ -1080,6 +1081,8 @@
       const baseUrl = window.location.origin + window.location.pathname;
       const customerLink = `${baseUrl}?shop=${state.shopId}`;
 
+      const isSelectedDateLocked = (state.shopState.lockedDates || []).includes(state.adminSelectedDate);
+
       container.innerHTML = `
         <div class="bg-indigo-500/10 border border-indigo-500/30 p-4 md:p-5 rounded-2xl md:rounded-3xl mb-4 md:mb-6 flex flex-col lg:flex-row justify-between items-center gap-4 shadow-lg relative overflow-hidden animate-fade-in-down w-full">
            <div class="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-indigo-500/10 blur-2xl md:blur-3xl rounded-full pointer-events-none"></div>
@@ -1100,14 +1103,20 @@
               <i data-lucide="settings-2" class="w-5 h-5 md:w-6 md:h-6 text-amber-500 shrink-0"></i> <span class="truncate">إدارة ${state.shopState.shopName || state.shopId}</span>
            </h2>
            <div class="grid grid-cols-2 md:flex flex-wrap justify-center gap-2 md:gap-3 w-full md:w-auto">
-             <button data-action="toggle-shop" class="col-span-2 md:col-span-1 md:flex-none px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border w-full">
+             <button data-action="toggle-shop" class="md:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border w-full">
                <i data-lucide="power" class="w-4 h-4 md:w-5 md:h-5"></i>
                ${isOpen ? 'إغلاق الصالون' : 'فتح الصالون'}
              </button>
-             <button data-action="toggle-admin-add-modal" class="md:flex-none bg-amber-500 hover:bg-amber-400 text-gray-900 px-3 md:px-6 py-2.5 md:py-3 font-bold rounded-xl shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm w-full">
+             
+             <button data-action="toggle-lock-date" data-date="${state.adminSelectedDate}" class="md:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isSelectedDateLocked ? 'bg-red-500/20 hover:bg-red-500/30 text-red-500 border-red-500/50' : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500'} border w-full">
+               <i data-lucide="${isSelectedDateLocked ? 'lock' : 'unlock'}" class="w-4 h-4 md:w-5 md:h-5"></i>
+               ${isSelectedDateLocked ? 'فتح حجز اليوم' : 'إغلاق حجز اليوم'}
+             </button>
+
+             <button data-action="toggle-admin-add-modal" class="md:flex-none bg-amber-500 hover:bg-amber-400 text-gray-900 px-2 md:px-4 py-2.5 md:py-3 font-bold rounded-xl shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm w-full">
                 <i data-lucide="user-plus" class="w-4 h-4 md:w-5 md:h-5"></i> إضافة
              </button>
-             <button data-action="toggle-admin-settings" class="md:flex-none bg-gray-800 hover:bg-gray-700 text-white px-3 md:px-6 py-2.5 md:py-3 font-bold rounded-xl border border-gray-700 shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm w-full">
+             <button data-action="toggle-admin-settings" class="md:flex-none bg-gray-800 hover:bg-gray-700 text-white px-2 md:px-4 py-2.5 md:py-3 font-bold rounded-xl border border-gray-700 shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm w-full">
                 <i data-lucide="settings" class="w-4 h-4 md:w-5 md:h-5 text-gray-400"></i> إعدادات
              </button>
            </div>
@@ -1347,6 +1356,8 @@
       const presentCountDate = waitingQueueForDate.filter(q => q.presenceStatus === 'here').length;
       const dateLabel = (tempDate === today) ? 'اليوم' : tempDate;
       
+      const isDateLocked = (state.shopState.lockedDates || []).includes(tempDate);
+
       // Auto open form if cooldown is completely passed for returning customers
       const isCooldownOver = isReturning ? checkCooldown(true) : true;
       const showForm = !isReturning || state.showNewBookingForm || isCooldownOver;
@@ -1443,6 +1454,28 @@
             backBtnHTML = `<button data-action="hide-booking-form" class="text-xs md:text-sm text-gray-500 hover:text-white flex items-center gap-1 transition shrink-0"><i data-lucide="arrow-right" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> <span class="hidden xs:inline">رجوع</span></button>`;
          }
 
+         let submitAreaHTML = '';
+         if (isDateLocked) {
+             submitAreaHTML = `
+               <div class="bg-red-500/10 border border-red-500/30 p-4 md:p-5 rounded-2xl text-center shadow-inner mt-4 animate-fade-in-down w-full">
+                  <div class="w-12 h-12 md:w-16 md:h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                     <i data-lucide="lock" class="w-6 h-6 md:w-8 md:h-8 text-red-500"></i>
+                  </div>
+                  <h3 class="text-red-500 font-black text-base md:text-xl mb-2">عذراً، اكتمل الحجز لهذا اليوم!</h3>
+                  <p class="text-gray-300 text-xs md:text-sm leading-relaxed mb-4">لقد وصلنا للحد الأقصى المسموح به من الحجوزات ليوم (${tempDate}). للحصول على دورك بالترتيب، يرجى تغيير التاريخ من التقويم أعلاه لأي يوم آخر متاح وسيتم تأكيد حجزك فوراً.</p>
+                  <label for="input-booking-date" class="cursor-pointer inline-flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-5 py-3 rounded-xl border border-gray-600 transition text-sm font-bold shadow-lg w-full sm:w-auto">
+                     <i data-lucide="calendar" class="w-4 h-4"></i> تغيير تاريخ الحجز
+                  </label>
+               </div>
+             `;
+         } else {
+             submitAreaHTML = `
+               <button data-action="book-ticket" class="w-full py-3 md:py-4 rounded-xl font-bold text-base md:text-xl transition shadow-lg bg-amber-500 hover:bg-amber-400 text-gray-900 shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center justify-center gap-1.5 md:gap-2 mt-4">
+                 <i data-lucide="check-square" class="w-5 h-5 md:w-6 md:h-6 shrink-0"></i> تأكيد الحجز وإصدار الرقم
+               </button>
+             `;
+         }
+
          contentHTML += `
           <div class="bg-gray-900 p-5 md:p-8 rounded-2xl md:rounded-3xl border border-gray-800 shadow-xl mt-4 animate-fade-in-down w-full">
             <div class="flex justify-between items-center border-b border-gray-800 pb-3 md:pb-4 mb-4 md:mb-6 gap-2">
@@ -1490,9 +1523,7 @@
               </div>
             </div>
 
-            <button data-action="book-ticket" class="w-full py-3 md:py-4 rounded-xl font-bold text-base md:text-xl transition shadow-lg bg-amber-500 hover:bg-amber-400 text-gray-900 shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center justify-center gap-1.5 md:gap-2">
-              <i data-lucide="check-square" class="w-5 h-5 md:w-6 md:h-6 shrink-0"></i> تأكيد الحجز وإصدار الرقم
-            </button>
+            ${submitAreaHTML}
           </div>
          `;
       }
@@ -1814,7 +1845,8 @@
              products: ["جيل تصفيف", "كريم شعر", "زيت لحية"],
              gallery: DEFAULT_GALLERY,
              bannedPhones: [],
-             bannedDevices: []
+             bannedDevices: [],
+             lockedDates: []
           });
 
           // Log admin in automatically after creation
@@ -1835,7 +1867,7 @@
     });
 
     document.addEventListener('click', async (e) => {
-      let target = e.target.closest('button, a, i[data-action], div[data-action], tr[data-action]'); 
+      let target = e.target.closest('button, a, i[data-action], div[data-action], tr[data-action], label[data-action]'); 
       if (!target) return;
       
       // Stop row click action if the clicked item is a button inside that row
@@ -2147,9 +2179,6 @@
                   }
               }
 
-              // تم إزالة كود إزاحة الأرقام هنا (Shift) لأنه يسبب تكرار الأرقام.
-              // العميل المنتهي أخذ دوره بالرقم المخصص له، فلا يجب أن تتغير أرقام من بعده، لضمان استقرار رقم الدور لكل شخص.
-
               customAlert("تم إنهاء الخدمة وتسجيل الزيارة بنجاح.");
           }
       }
@@ -2175,6 +2204,22 @@
 
       if (action === 'toggle-shop') {
         await updateDoc(shopRef, { isOpen: !state.shopState.isOpen });
+      }
+
+      // --- Toggle Lock Date (Admin) ---
+      if (action === 'toggle-lock-date') {
+          const dateToToggle = target.getAttribute('data-date');
+          if(!dateToToggle) return;
+          
+          let currentLocked = [...(state.shopState.lockedDates || [])];
+          if (currentLocked.includes(dateToToggle)) {
+             currentLocked = currentLocked.filter(d => d !== dateToToggle);
+             customAlert(`تم فتح استقبال الحجوزات بنجاح ليوم: ${dateToToggle}`);
+          } else {
+             currentLocked.push(dateToToggle);
+             customAlert(`تم إغلاق الحجز واكتفاء العدد بنجاح ليوم: ${dateToToggle}\n(لن يتمكن العملاء من الحجز في هذا اليوم).`);
+          }
+          await updateDoc(shopRef, { lockedDates: currentLocked });
       }
       
       if (action === 'save-hours') {
@@ -2355,6 +2400,11 @@
           const newDate = await customPrompt("تعديل يوم الحجز:", oldDate, 'date');
           
           if (newDate && newDate !== oldDate) {
+              // التحقق ما إذا كان اليوم الجديد مغلقاً (مكتمل) من قبل الإدارة
+              if ((state.shopState.lockedDates || []).includes(newDate)) {
+                 return customError(`عذراً، يوم (${newDate}) اكتمل العدد فيه ومغلق للحجوزات. يرجى اختيار تاريخ آخر.`);
+              }
+
               // جلب كل العملاء لهذا اليوم (حتى المنتهين) لتجنب أخذ رقم تم استخدامه
               const queueForNewDate = state.queue.filter(q => q.bookingDate === newDate);
               const maxNewTicket = queueForNewDate.length > 0 ? Math.max(...queueForNewDate.map(q => q.ticketNumber || 0)) : 0;
@@ -2544,6 +2594,14 @@
         // Cooldown Check for completed
         if(!checkCooldown()) return;
 
+        const bDate = document.getElementById('input-booking-date')?.value;
+        if (!bDate) return customAlert("يرجى اختيار تاريخ الحجز أولاً.");
+
+        // Security Guard: Check if chosen date is locked by admin
+        if ((state.shopState.lockedDates || []).includes(bDate)) {
+            return customError(`عذراً، يوم (${bDate}) مغلق للحجوزات لاكتمال العدد. يرجى اختيار يوم آخر.`);
+        }
+
         // منع حجز دور
         const existingBooking = state.queue.find(q => 
             (q.phone === state.customerPhone || q.deviceId === localDeviceId) && 
@@ -2553,9 +2611,6 @@
         if (existingBooking) {
             return customAlert(`عفواً، تم رصد حجز مسبق من قبلك (رقم الدور: ${existingBooking.ticketNumber} ليوم ${existingBooking.bookingDate}).\n\nيرجى الانتهاء من دورك الحالي أولاً. وإذا كنت قد أخطأت في موعدك، يمكنك استخدام زر "تعديل اليوم" من شاشة متابعة دورك بدلاً من حجز موعد جديد.`);
         }
-
-        const bDate = document.getElementById('input-booking-date')?.value;
-        if (!bDate) return customAlert("يرجى اختيار تاريخ الحجز أولاً.");
 
         // إظهار مؤشر التحميل على الزر وإيقافه مؤقتاً
         const originalText = target.innerHTML;
@@ -2710,6 +2765,10 @@
        if (e.target.id === 'input-booking-date') {
            state.tempBookingDate = e.target.value;
            updateWaitingCount();
+           // تحديث الواجهة فوراً في حالة اختيار يوم مغلق
+           if (state.role === 'customer' && state.showNewBookingForm) {
+               renderCustomerBooking();
+           }
        }
     });
 
@@ -2902,6 +2961,8 @@
           if(!state.shopState.gallery || state.shopState.gallery.length === 0) state.shopState.gallery = DEFAULT_GALLERY;
           if(!state.shopState.services) state.shopState.services = [];
           if(!state.shopState.products) state.shopState.products = [];
+          if(!state.shopState.lockedDates) state.shopState.lockedDates = []; // Initialization
+          
           // Backward compatibility for chairs
           if(!state.shopState.chairs || state.shopState.chairs.length === 0) {
              state.shopState.chairs = [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: state.shopState.timerEndTime || 0 }];
