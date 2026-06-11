@@ -503,6 +503,8 @@
         adminPin: '',
         subscriptionEnd: 0,
         isOpen: false,
+        isOnBreak: false,
+        breakEndTime: null,
         chairs: [], // Multi-chair support
         totalRatings: 0,
         ratingSum: 0,
@@ -1102,19 +1104,19 @@
            <h2 class="text-xl md:text-2xl font-black text-white tracking-wider flex items-center gap-2 w-full md:w-auto justify-center md:justify-start mb-2 md:mb-0">
               <i data-lucide="settings-2" class="w-5 h-5 md:w-6 md:h-6 text-amber-500 shrink-0"></i> <span class="truncate">إدارة ${state.shopState.shopName || state.shopId}</span>
            </h2>
-           <div class="grid grid-cols-2 md:flex flex-wrap justify-center gap-2 md:gap-3 w-full md:w-auto">
-             <button data-action="toggle-shop" class="md:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border w-full">
+           <div class="grid grid-cols-2 lg:flex flex-wrap justify-center gap-2 md:gap-3 w-full md:w-auto">
+             <button data-action="toggle-shop" class="col-span-2 md:col-span-1 lg:flex-none px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border w-full">
                <i data-lucide="power" class="w-4 h-4 md:w-5 md:h-5"></i>
                ${isOpen ? 'إغلاق الصالون' : 'فتح الصالون'}
              </button>
              
-             <button data-action="toggle-lock-date" data-date="${state.adminSelectedDate}" class="md:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isSelectedDateLocked ? 'bg-red-500/20 hover:bg-red-500/30 text-red-500 border-red-500/50' : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500'} border w-full">
-               <i data-lucide="${isSelectedDateLocked ? 'lock' : 'unlock'}" class="w-4 h-4 md:w-5 md:h-5"></i>
-               ${isSelectedDateLocked ? 'فتح حجز اليوم' : 'إغلاق حجز اليوم'}
+             <button data-action="${state.shopState.isOnBreak ? 'end-break' : 'start-break'}" class="col-span-2 md:col-span-1 lg:flex-none px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm ${state.shopState.isOnBreak ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500 animate-pulse' : 'bg-gray-800 hover:bg-gray-700 text-orange-400 border-gray-700'} border w-full">
+               <i data-lucide="coffee" class="w-4 h-4 md:w-5 md:h-5"></i>
+               ${state.shopState.isOnBreak ? 'إنهاء الراحة' : 'فترة راحة'}
              </button>
 
-             <button data-action="toggle-admin-add-modal" class="md:flex-none bg-amber-500 hover:bg-amber-400 text-gray-900 px-2 md:px-4 py-2.5 md:py-3 font-bold rounded-xl shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm w-full">
-                <i data-lucide="user-plus" class="w-4 h-4 md:w-5 md:h-5"></i> إضافة
+             <button data-action="toggle-lock-date" data-date="${state.adminSelectedDate}" class="lg:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isSelectedDateLocked ? 'bg-red-500/20 hover:bg-red-500/30 text-red-500 border-red-500/50' : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500'} border w-full">
+                <i data-lucide="user-plus" class="w-4 h-4 md:w-5 md:h-5"></i> قفل حجز اليوم
              </button>
              <button data-action="toggle-admin-settings" class="md:flex-none bg-gray-800 hover:bg-gray-700 text-white px-2 md:px-4 py-2.5 md:py-3 font-bold rounded-xl border border-gray-700 shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm w-full">
                 <i data-lucide="settings" class="w-4 h-4 md:w-5 md:h-5 text-gray-400"></i> إعدادات
@@ -1362,6 +1364,22 @@
       const isCooldownOver = isReturning ? checkCooldown(true) : true;
       const showForm = !isReturning || state.showNewBookingForm || isCooldownOver;
 
+      let breakBannerHTML = '';
+      if (state.shopState.isOnBreak) {
+          breakBannerHTML = `
+            <div class="bg-gradient-to-r from-orange-600/20 to-amber-600/20 border border-orange-500/50 p-4 md:p-5 rounded-2xl mb-4 md:mb-6 shadow-[0_0_15px_rgba(249,115,22,0.15)] animate-fade-in-down flex items-start sm:items-center gap-3 md:gap-4">
+                <div class="bg-orange-500 text-gray-900 rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shrink-0 shadow-lg">
+                    <i data-lucide="coffee" class="w-6 h-6 md:w-7 md:h-7"></i>
+                </div>
+                <div>
+                    <h3 class="text-orange-400 font-black text-sm md:text-lg mb-1">الصالون في فترة راحة حالياً</h3>
+                    <p class="text-gray-300 text-xs md:text-sm leading-relaxed">
+                        نحن في استراحة قصيرة، وسنعود لخدمتكم ومتابعة العمل في تمام الساعة <span class="font-black text-white bg-gray-900 px-2 py-0.5 rounded border border-gray-700 inline-block" dir="ltr">${state.shopState.breakEndTime || 'قريباً'}</span>. نعتذر عن التأخير ونشكر تفهمكم لراحتنا.
+                    </p>
+                </div>
+            </div>`;
+      }
+
       const duaHTML = `
         <div class="marquee-container bg-amber-500/10 border border-amber-500/30 text-amber-500 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-inner mb-4 sm:mb-6">
           <div class="animate-marquee">
@@ -1370,7 +1388,7 @@
         </div>
       `;
 
-      let contentHTML = duaHTML + getGalleryHTML(); 
+      let contentHTML = duaHTML + breakBannerHTML + getGalleryHTML(); 
 
       const statusColor = isOpen ? 'bg-green-500/20 text-green-500 border-green-500/30' : 'bg-red-500/20 text-red-500 border-red-500/30';
       const statusText = isOpen ? 'مفتوح الآن' : 'مغلق حالياً';
@@ -1541,7 +1559,24 @@
       const container = document.getElementById('customer-dashboard-content');
       const chairs = state.shopState.chairs || [{ id: 'chair-1', name: 'الكرسي الرئيسي' }];
       const activeTickets = state.queue.filter(q => q.status === 'active');
-      let htmlContent = getGalleryHTML(); 
+      
+      let breakBannerHTML = '';
+      if (state.shopState.isOnBreak) {
+          breakBannerHTML = `
+            <div class="bg-gradient-to-r from-orange-600/20 to-amber-600/20 border border-orange-500/50 p-4 md:p-5 rounded-2xl mb-4 md:mb-6 shadow-[0_0_15px_rgba(249,115,22,0.15)] animate-fade-in-down flex items-start sm:items-center gap-3 md:gap-4">
+                <div class="bg-orange-500 text-gray-900 rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shrink-0 shadow-lg">
+                    <i data-lucide="coffee" class="w-6 h-6 md:w-7 md:h-7"></i>
+                </div>
+                <div>
+                    <h3 class="text-orange-400 font-black text-sm md:text-lg mb-1">تنبيه: الصالون في فترة راحة</h3>
+                    <p class="text-gray-300 text-xs md:text-sm leading-relaxed">
+                        نحن في استراحة قصيرة، وسنستأنف استقبال أدواركم في تمام الساعة <span class="font-black text-white bg-gray-900 px-2 py-0.5 rounded border border-gray-700 inline-block" dir="ltr">${state.shopState.breakEndTime || 'قريباً'}</span>.
+                    </p>
+                </div>
+            </div>`;
+      }
+
+      let htmlContent = breakBannerHTML + getGalleryHTML(); 
       htmlContent += getPersonalGalleryHTML();
 
       if (state.myTicket.status === 'completed') {
@@ -1837,6 +1872,8 @@
              adminPin: sPin,
              subscriptionEnd: subscriptionEnd,
              isOpen: false,
+             isOnBreak: false,
+             breakEndTime: null,
              chairs: [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0 }],
              totalRatings: 0,
              ratingSum: 0,
@@ -2204,6 +2241,39 @@
 
       if (action === 'toggle-shop') {
         await updateDoc(shopRef, { isOpen: !state.shopState.isOpen });
+      }
+
+      // --- Break Time Logic ---
+      if (action === 'start-break') {
+          const html = `
+              <div class="text-right space-y-3 mt-2">
+                 <label class="block text-gray-400 text-xs md:text-sm font-bold">اختر وقت انتهاء فترة الراحة وعودة العمل (مثال: بعد نصف ساعة):</label>
+                 <input type="time" id="input-break-end-time" class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none" required>
+              </div>
+          `;
+          const ok = await showModal({
+              type: 'confirm',
+              title: '☕ بدء فترة راحة للصالون',
+              iconName: 'coffee',
+              iconBgClass: 'bg-orange-500/20 text-orange-500',
+              htmlContent: html,
+              confirmText: 'تفعيل الراحة وإعلام العملاء'
+          });
+
+          if (ok) {
+              const breakTime = document.getElementById('input-break-end-time').value;
+              if (!breakTime) return customAlert('يرجى تحديد وقت انتهاء الراحة أولاً.');
+              await updateDoc(shopRef, { isOnBreak: true, breakEndTime: breakTime });
+              customAlert('تم تفعيل فترة الراحة وإعلام جميع العملاء بنجاح.');
+          }
+      }
+
+      if (action === 'end-break') {
+          const ok = await customConfirm('هل أنت متأكد من إنهاء فترة الراحة والعودة للعمل الآن؟');
+          if (ok) {
+              await updateDoc(shopRef, { isOnBreak: false, breakEndTime: null });
+              customAlert('تم إنهاء فترة الراحة وعودة العمل بنجاح.');
+          }
       }
 
       // --- Toggle Lock Date (Admin) ---
