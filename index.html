@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>منصة إدارة الصالونات</title>
+  
+  <!-- إعدادات تطبيق الويب (PWA) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="الصالون">
+  <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"منصة إدارة الصالونات","short_name":"الصالون","start_url":".","display":"standalone","background_color":"%23030712","theme_color":"%23030712","icons":[{"src":"data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>","sizes":"512x512","type":"image/svg+xml"}]}'>
+
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
   <!-- Tailwind CSS -->
@@ -291,6 +298,13 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, addDoc, deleteDoc, serverTimestamp, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
+    // --- PWA Install Prompt Logic ---
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
     // --- Audio setup for Notifications ---
     const adminAudioNotif = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     const customerAlertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -350,6 +364,9 @@
           if(options.inputType === 'date') {
               const today = new Date().toISOString().split('T')[0];
               inputEl.min = today;
+              inputEl.classList.add('text-left', 'dir-ltr');
+          } else if(options.inputType === 'time') {
+              inputEl.removeAttribute('min');
               inputEl.classList.add('text-left', 'dir-ltr');
           } else {
               inputEl.removeAttribute('min');
@@ -503,8 +520,6 @@
         adminPin: '',
         subscriptionEnd: 0,
         isOpen: false,
-        isOnBreak: false,
-        breakEndTime: null,
         chairs: [], // Multi-chair support
         totalRatings: 0,
         ratingSum: 0,
@@ -514,7 +529,8 @@
         gallery: DEFAULT_GALLERY,
         bannedPhones: [],
         bannedDevices: [],
-        lockedDates: [] // Array of 'YYYY-MM-DD' representing locked/fully booked days
+        lockedDates: [], // Array of 'YYYY-MM-DD' representing locked/fully booked days
+        whatsappGroupLink: '' // رابط جروب الواتساب
       },
       queue: [],
       knownTicketIds: new Set(), // For audio notifications
@@ -1104,22 +1120,27 @@
            <h2 class="text-xl md:text-2xl font-black text-white tracking-wider flex items-center gap-2 w-full md:w-auto justify-center md:justify-start mb-2 md:mb-0">
               <i data-lucide="settings-2" class="w-5 h-5 md:w-6 md:h-6 text-amber-500 shrink-0"></i> <span class="truncate">إدارة ${state.shopState.shopName || state.shopId}</span>
            </h2>
-           <div class="grid grid-cols-2 lg:flex flex-wrap justify-center gap-2 md:gap-3 w-full md:w-auto">
-             <button data-action="toggle-shop" class="col-span-2 md:col-span-1 lg:flex-none px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border w-full">
-               <i data-lucide="power" class="w-4 h-4 md:w-5 md:h-5"></i>
-               ${isOpen ? 'إغلاق الصالون' : 'فتح الصالون'}
+           <div class="grid grid-cols-2 lg:flex lg:flex-wrap justify-center gap-2 md:gap-3 w-full lg:w-auto">
+             <button data-action="toggle-shop" class="lg:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isOpen ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : 'bg-green-500 hover:bg-green-600 text-white border-green-500'} border w-full h-full">
+               <i data-lucide="power" class="w-4 h-4 md:w-5 md:h-5 shrink-0"></i>
+               <span class="truncate">${isOpen ? 'إغلاق الصالون' : 'فتح الصالون'}</span>
              </button>
              
-             <button data-action="${state.shopState.isOnBreak ? 'end-break' : 'start-break'}" class="col-span-2 md:col-span-1 lg:flex-none px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm ${state.shopState.isOnBreak ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500 animate-pulse' : 'bg-gray-800 hover:bg-gray-700 text-orange-400 border-gray-700'} border w-full">
-               <i data-lucide="coffee" class="w-4 h-4 md:w-5 md:h-5"></i>
-               ${state.shopState.isOnBreak ? 'إنهاء الراحة' : 'فترة راحة'}
+             <button data-action="toggle-lock-date" data-date="${state.adminSelectedDate}" class="lg:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isSelectedDateLocked ? 'bg-red-500/20 hover:bg-red-500/30 text-red-500 border-red-500/50' : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500'} border w-full h-full">
+               <i data-lucide="${isSelectedDateLocked ? 'lock' : 'unlock'}" class="w-4 h-4 md:w-5 md:h-5 shrink-0"></i>
+               <span class="truncate">${isSelectedDateLocked ? 'فتح حجز اليوم' : 'إغلاق حجز اليوم'}</span>
              </button>
 
-             <button data-action="toggle-lock-date" data-date="${state.adminSelectedDate}" class="lg:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${isSelectedDateLocked ? 'bg-red-500/20 hover:bg-red-500/30 text-red-500 border-red-500/50' : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500'} border w-full">
-                <i data-lucide="user-plus" class="w-4 h-4 md:w-5 md:h-5"></i> قفل حجز اليوم
+             <button data-action="toggle-break" class="col-span-2 lg:col-span-1 lg:flex-none px-2 md:px-4 py-2.5 md:py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm ${state.shopState.isOnBreak ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500' : 'bg-gray-800 hover:bg-gray-700 text-white border-gray-700'} border w-full h-full">
+               <i data-lucide="coffee" class="w-4 h-4 md:w-5 md:h-5 shrink-0"></i>
+               <span class="truncate">${state.shopState.isOnBreak ? 'إنهاء الراحة' : 'فترة راحة'}</span>
              </button>
-             <button data-action="toggle-admin-settings" class="md:flex-none bg-gray-800 hover:bg-gray-700 text-white px-2 md:px-4 py-2.5 md:py-3 font-bold rounded-xl border border-gray-700 shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm w-full">
-                <i data-lucide="settings" class="w-4 h-4 md:w-5 md:h-5 text-gray-400"></i> إعدادات
+
+             <button data-action="toggle-admin-add-modal" class="lg:flex-none bg-amber-500 hover:bg-amber-400 text-gray-900 px-2 md:px-4 py-2.5 md:py-3 font-bold rounded-xl shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm w-full h-full">
+                <i data-lucide="user-plus" class="w-4 h-4 md:w-5 md:h-5 shrink-0"></i> <span class="truncate">إضافة</span>
+             </button>
+             <button data-action="toggle-admin-settings" class="lg:flex-none bg-gray-800 hover:bg-gray-700 text-white px-2 md:px-4 py-2.5 md:py-3 font-bold rounded-xl border border-gray-700 shadow-md flex items-center justify-center gap-1.5 md:gap-2 transition-all text-[10px] md:text-sm w-full h-full">
+                <i data-lucide="settings" class="w-4 h-4 md:w-5 md:h-5 text-gray-400 shrink-0"></i> <span class="truncate">إعدادات</span>
              </button>
            </div>
         </div>
@@ -1274,6 +1295,10 @@
                        <input type="time" id="shop-end-time" value="${state.shopState.workingHours?.end || '23:00'}" class="bg-transparent w-full text-white outline-none font-bold text-sm md:text-base" />
                     </div>
                  </div>
+                 
+                 <h4 class="text-green-500 font-bold mt-3 md:mt-4 mb-1.5 md:mb-2 text-sm flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4"></i> جروب الواتساب للصالون</h4>
+                 <input type="url" id="shop-wa-link" value="${state.shopState.whatsappGroupLink || ''}" placeholder="ضع رابط الجروب هنا (اختياري)..." class="w-full bg-gray-950 border border-gray-700 rounded-xl p-2.5 md:p-3 text-white outline-none font-mono text-sm md:text-base dir-ltr text-left mb-4 focus:border-green-500 transition" />
+
                  <button data-action="save-hours" class="w-full bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 border border-amber-500/50 font-bold py-2.5 md:py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm md:text-base"><i data-lucide="save" class="w-4 h-4 md:w-5 md:h-5"></i> حفظ الإعدادات</button>
               </div>
            </div>
@@ -1364,20 +1389,26 @@
       const isCooldownOver = isReturning ? checkCooldown(true) : true;
       const showForm = !isReturning || state.showNewBookingForm || isCooldownOver;
 
-      let breakBannerHTML = '';
-      if (state.shopState.isOnBreak) {
-          breakBannerHTML = `
-            <div class="bg-gradient-to-r from-orange-600/20 to-amber-600/20 border border-orange-500/50 p-4 md:p-5 rounded-2xl mb-4 md:mb-6 shadow-[0_0_15px_rgba(249,115,22,0.15)] animate-fade-in-down flex items-start sm:items-center gap-3 md:gap-4">
-                <div class="bg-orange-500 text-gray-900 rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shrink-0 shadow-lg">
-                    <i data-lucide="coffee" class="w-6 h-6 md:w-7 md:h-7"></i>
-                </div>
-                <div>
-                    <h3 class="text-orange-400 font-black text-sm md:text-lg mb-1">الصالون في فترة راحة حالياً</h3>
-                    <p class="text-gray-300 text-xs md:text-sm leading-relaxed">
-                        نحن في استراحة قصيرة، وسنعود لخدمتكم ومتابعة العمل في تمام الساعة <span class="font-black text-white bg-gray-900 px-2 py-0.5 rounded border border-gray-700 inline-block" dir="ltr">${state.shopState.breakEndTime || 'قريباً'}</span>. نعتذر عن التأخير ونشكر تفهمكم لراحتنا.
-                    </p>
-                </div>
-            </div>`;
+      const waLink = state.shopState.whatsappGroupLink;
+      let waGroupHTML = '';
+      if (waLink) {
+          waGroupHTML = `
+          <div class="bg-gradient-to-r from-green-900/40 to-green-600/10 border border-green-500/30 p-3 md:p-4 rounded-2xl mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-fade-in-down w-full relative overflow-hidden group">
+              <div class="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition"></div>
+              <div class="flex items-center gap-3 relative z-10 w-full sm:w-auto">
+                  <div class="w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg shrink-0">
+                      <i data-lucide="message-circle" class="w-5 h-5 md:w-6 md:h-6 text-white"></i>
+                  </div>
+                  <div>
+                      <h4 class="text-green-400 font-bold text-sm md:text-base mb-0.5">تابعنا على جروب الواتساب</h4>
+                      <p class="text-gray-300 text-[10px] md:text-xs">لمعرفة أحدث عروض وأخبار الصالون أولاً بأول.</p>
+                  </div>
+              </div>
+              <a href="${waLink}" target="_blank" class="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-bold transition shadow-md text-center shrink-0 relative z-10 flex items-center justify-center gap-2">
+                 انضم الآن <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>
+          </div>
+          `;
       }
 
       const duaHTML = `
@@ -1388,12 +1419,32 @@
         </div>
       `;
 
-      let contentHTML = duaHTML + breakBannerHTML + getGalleryHTML(); 
+      let contentHTML = duaHTML + getGalleryHTML(); 
 
       const statusColor = isOpen ? 'bg-green-500/20 text-green-500 border-green-500/30' : 'bg-red-500/20 text-red-500 border-red-500/30';
       const statusText = isOpen ? 'مفتوح الآن' : 'مغلق حالياً';
       const workingH = state.shopState.workingHours || {start: '10:00', end: '23:00'};
       
+      let breakBannerHTML = '';
+      if (state.shopState.isOnBreak) {
+          let endStr = state.shopState.breakEndTime ? `حتى الساعة <span class="font-black bg-orange-500 text-gray-900 px-1.5 rounded">${state.shopState.breakEndTime}</span>` : 'لفترة قصيرة';
+          breakBannerHTML = `
+              <div class="bg-orange-500/10 border border-orange-500/30 p-3 md:p-4 rounded-2xl mb-4 md:mb-6 flex flex-col sm:flex-row items-center gap-3 shadow-md animate-fade-in-down w-full relative overflow-hidden">
+                  <div class="absolute inset-0 bg-orange-500/5 pointer-events-none"></div>
+                  <div class="w-10 h-10 md:w-12 md:h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shrink-0 relative z-10">
+                      <i data-lucide="coffee" class="w-5 h-5 md:w-6 md:h-6 text-gray-900"></i>
+                  </div>
+                  <div class="text-center sm:text-right relative z-10">
+                      <h4 class="text-orange-400 font-bold text-sm md:text-base mb-1">الصالون في استراحة مؤقتة ☕</h4>
+                      <p class="text-gray-300 text-xs md:text-sm leading-relaxed">طاقم العمل في راحة الآن ${endStr}. يمكنك حجز دورك وسنبدأ العمل فور العودة. نشكر تفهمكم!</p>
+                  </div>
+              </div>
+          `;
+      }
+
+      contentHTML += breakBannerHTML;
+      contentHTML += waGroupHTML;
+
       contentHTML += `
          <div class="bg-gray-800/60 p-4 md:p-5 rounded-2xl border border-gray-700 mb-4 md:mb-6 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4 shadow-lg animate-fade-in-down">
             <div class="flex items-center justify-center md:justify-between w-full md:w-auto gap-4 md:gap-8 border-b md:border-b-0 border-gray-700 pb-3 md:pb-0">
@@ -1559,24 +1610,7 @@
       const container = document.getElementById('customer-dashboard-content');
       const chairs = state.shopState.chairs || [{ id: 'chair-1', name: 'الكرسي الرئيسي' }];
       const activeTickets = state.queue.filter(q => q.status === 'active');
-      
-      let breakBannerHTML = '';
-      if (state.shopState.isOnBreak) {
-          breakBannerHTML = `
-            <div class="bg-gradient-to-r from-orange-600/20 to-amber-600/20 border border-orange-500/50 p-4 md:p-5 rounded-2xl mb-4 md:mb-6 shadow-[0_0_15px_rgba(249,115,22,0.15)] animate-fade-in-down flex items-start sm:items-center gap-3 md:gap-4">
-                <div class="bg-orange-500 text-gray-900 rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shrink-0 shadow-lg">
-                    <i data-lucide="coffee" class="w-6 h-6 md:w-7 md:h-7"></i>
-                </div>
-                <div>
-                    <h3 class="text-orange-400 font-black text-sm md:text-lg mb-1">تنبيه: الصالون في فترة راحة</h3>
-                    <p class="text-gray-300 text-xs md:text-sm leading-relaxed">
-                        نحن في استراحة قصيرة، وسنستأنف استقبال أدواركم في تمام الساعة <span class="font-black text-white bg-gray-900 px-2 py-0.5 rounded border border-gray-700 inline-block" dir="ltr">${state.shopState.breakEndTime || 'قريباً'}</span>.
-                    </p>
-                </div>
-            </div>`;
-      }
-
-      let htmlContent = breakBannerHTML + getGalleryHTML(); 
+      let htmlContent = getGalleryHTML(); 
       htmlContent += getPersonalGalleryHTML();
 
       if (state.myTicket.status === 'completed') {
@@ -1658,6 +1692,27 @@
       const today = new Date().toISOString().split('T')[0];
       const isToday = state.myTicket.bookingDate === today;
 
+      const waLink = state.shopState.whatsappGroupLink;
+      let waGroupHTML = '';
+      if (waLink) {
+          waGroupHTML = `
+          <div class="bg-gradient-to-r from-green-900/40 to-green-600/10 border border-green-500/30 p-3 md:p-4 rounded-2xl mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-fade-in-down w-full relative overflow-hidden group">
+              <div class="flex items-center gap-3 relative z-10 w-full sm:w-auto">
+                  <div class="w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg shrink-0">
+                      <i data-lucide="message-circle" class="w-5 h-5 md:w-6 md:h-6 text-white"></i>
+                  </div>
+                  <div>
+                      <h4 class="text-green-400 font-bold text-sm md:text-base mb-0.5">جروب الصالون (WhatsApp)</h4>
+                      <p class="text-gray-300 text-[10px] md:text-xs">انضم لمتابعة أحدث العروض والقصات.</p>
+                  </div>
+              </div>
+              <a href="${waLink}" target="_blank" class="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-bold transition shadow-md text-center shrink-0 relative z-10 flex items-center justify-center gap-2">
+                 انضم للجروب <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>
+          </div>
+          `;
+      }
+
       let posHTML = '';
       if (myPosition === 1) {
          if(isToday) posHTML = `<div class="text-green-400 bg-green-400/10 px-3 md:px-4 py-1.5 md:py-2 rounded-xl border border-green-400/30 font-black shadow-sm flex items-center justify-center gap-1.5 md:gap-2 text-[10px] md:text-sm"><i data-lucide="check-circle" class="w-4 h-4 md:w-5 md:h-5 shrink-0"></i> <span>أنت الدور القادم! استعد يا ${state.customerName}</span></div>`;
@@ -1709,16 +1764,20 @@
         </div>
       `;
 
-      const currentURL = window.location.href;
-      const shareLinkHTML = `
-        <div class="bg-gray-900 border border-gray-800 p-3 md:p-4 rounded-xl mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-4 w-full">
+      const quickActionsHTML = `
+        <div class="bg-gray-900 border border-gray-800 p-4 md:p-5 rounded-2xl mb-4 md:mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 w-full shadow-lg animate-fade-in-down">
            <div class="text-center sm:text-right w-full sm:w-auto">
-             <h4 class="text-gray-300 font-bold text-xs md:text-sm mb-0.5 md:mb-1 flex items-center justify-center sm:justify-start gap-1.5 md:gap-2"><i data-lucide="link" class="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 shrink-0"></i> رابط حجزك المباشر</h4>
-             <p class="text-gray-500 text-[9px] md:text-xs">احفظ هذا الرابط للعودة لهذه الصفحة ومتابعة دورك.</p>
+             <h4 class="text-gray-200 font-bold text-sm md:text-base mb-1 flex items-center justify-center sm:justify-start gap-2"><i data-lucide="smartphone" class="w-4 h-4 md:w-5 md:h-5 text-amber-500 shrink-0"></i> الوصول السريع والإشعارات</h4>
+             <p class="text-gray-500 text-[10px] md:text-xs">ثبّت التطبيق على شاشتك وفعل الإشعارات لمتابعة دورك لحظة بلحظة.</p>
            </div>
-           <button onclick="copyToClipboard('${currentURL}')" class="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 text-white px-3 md:px-4 py-2 rounded-lg border border-gray-600 text-[10px] md:text-sm font-bold flex items-center justify-center gap-1.5 md:gap-2 transition shrink-0">
-             <i data-lucide="copy" class="w-3 h-3 md:w-4 md:h-4 shrink-0"></i> نسخ الرابط
-           </button>
+           <div class="flex flex-col xs:flex-row gap-2.5 w-full sm:w-auto shrink-0">
+             <button data-action="install-app" class="w-full xs:w-auto bg-amber-500 hover:bg-amber-400 text-gray-900 px-4 md:px-5 py-2.5 md:py-3 rounded-xl font-black text-xs md:text-sm flex items-center justify-center gap-2 transition shadow-md">
+               <i data-lucide="download" class="w-4 h-4 shrink-0"></i> تثبيت التطبيق
+             </button>
+             <button data-action="enable-notifications" class="w-full xs:w-auto bg-gray-800 hover:bg-gray-700 text-white px-4 md:px-5 py-2.5 md:py-3 rounded-xl border border-gray-600 font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition">
+               <i data-lucide="bell-ring" class="w-4 h-4 shrink-0 text-amber-500"></i> تفعيل الإشعارات
+             </button>
+           </div>
         </div>
       `;
 
@@ -1733,6 +1792,23 @@
             </div>
           </div>
         `;
+      }
+
+      let breakBannerHTML = '';
+      if (state.shopState.isOnBreak) {
+          let endStr = state.shopState.breakEndTime ? `حتى الساعة <span class="font-black bg-orange-500 text-gray-900 px-1.5 rounded">${state.shopState.breakEndTime}</span>` : 'لفترة قصيرة';
+          breakBannerHTML = `
+              <div class="bg-orange-500/10 border border-orange-500/30 p-3 md:p-4 rounded-2xl mb-4 md:mb-6 flex flex-col sm:flex-row items-center gap-3 shadow-md animate-fade-in-down w-full relative overflow-hidden">
+                  <div class="absolute inset-0 bg-orange-500/5 pointer-events-none"></div>
+                  <div class="w-10 h-10 md:w-12 md:h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shrink-0 relative z-10">
+                      <i data-lucide="coffee" class="w-5 h-5 md:w-6 md:h-6 text-gray-900"></i>
+                  </div>
+                  <div class="text-center sm:text-right relative z-10">
+                      <h4 class="text-orange-400 font-bold text-sm md:text-base mb-1">الصالون في استراحة مؤقتة ☕</h4>
+                      <p class="text-gray-300 text-[10px] md:text-sm leading-relaxed">طاقم العمل في راحة الآن ${endStr}. برجاء الحضور بعد هذا الوقت للحصول على خدمتك. نشكر تفهمكم.</p>
+                  </div>
+              </div>
+          `;
       }
 
       let urgentAlertHTML = '';
@@ -1757,6 +1833,10 @@
                   const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
                   alertSound.play();
               } catch(e) {}
+              
+              if ("Notification" in window && Notification.permission === "granted") {
+                 new Notification("نداء عاجل من الصالون!", { body: "يرجى التوجه للصالون فوراً! دورك حان أو اقترب جداً.", icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>" });
+              }
           }
       }
 
@@ -1795,7 +1875,9 @@
       `;
 
       htmlContent += `
-        ${shareLinkHTML}
+        ${quickActionsHTML}
+        ${breakBannerHTML}
+        ${waGroupHTML}
         ${warningCardHTML}
         ${adminMsgHTML}
         ${urgentAlertHTML}
@@ -1872,8 +1954,6 @@
              adminPin: sPin,
              subscriptionEnd: subscriptionEnd,
              isOpen: false,
-             isOnBreak: false,
-             breakEndTime: null,
              chairs: [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0 }],
              totalRatings: 0,
              ratingSum: 0,
@@ -1883,7 +1963,8 @@
              gallery: DEFAULT_GALLERY,
              bannedPhones: [],
              bannedDevices: [],
-             lockedDates: []
+             lockedDates: [],
+             whatsappGroupLink: ''
           });
 
           // Log admin in automatically after creation
@@ -1914,6 +1995,44 @@
 
       const action = target.getAttribute('data-action');
       const shopRef = state.shopId ? doc(db, ROOT_COLLECTION, state.shopId) : null;
+
+      // --- Install App (PWA) Action ---
+      if (action === 'install-app') {
+          if (deferredPrompt) {
+              deferredPrompt.prompt();
+              const { outcome } = await deferredPrompt.userChoice;
+              deferredPrompt = null;
+          } else {
+              const isIos = () => {
+                const userAgent = window.navigator.userAgent.toLowerCase();
+                return /iphone|ipad|ipod/.test(userAgent);
+              };
+              if(isIos()) {
+                  customAlert("لتثبيت التطبيق على آيفون:\n1. اضغط على زر المشاركة (Share) ⍐ أسفل الشاشة.\n2. اسحب للأسفل واختر 'إضافة إلى الصفحة الرئيسية' (Add to Home Screen) ⊕.");
+              } else {
+                  customAlert("لتثبيت التطبيق:\nاضغط على قائمة خيارات المتصفح (ثلاث نقاط ⋮) في الأعلى، ثم اختر 'إضافة إلى الشاشة الرئيسية' أو (Add to Home screen).");
+              }
+          }
+      }
+
+      // --- Enable Notifications Action ---
+      if (action === 'enable-notifications') {
+          if (!("Notification" in window)) {
+              customError("عذراً، متصفحك لا يدعم خاصية الإشعارات.");
+              return;
+          }
+          if (Notification.permission === "granted") {
+              customAlert("الإشعارات مفعلة بالفعل!");
+          } else {
+              const permission = await Notification.requestPermission();
+              if (permission === "granted") {
+                  customAlert("تم تفعيل الإشعارات بنجاح! سيتم تنبيهك عند اقتراب دورك.");
+                  new Notification("منصة الصالون", { body: "شكراً لتفعيل الإشعارات. سيتم إعلامك هنا بكل جديد.", icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>" });
+              } else {
+                  customAlert("تم إيقاف الإشعارات. لتفعيلها لاحقاً، يرجى تغيير الإعدادات من قفل الأمان بجوار رابط الموقع في المتصفح.");
+              }
+          }
+      }
 
       if (action === 'open-wa') {
          openWhatsAppMenu(target.getAttribute('data-phone'), target.getAttribute('data-name'), null);
@@ -2243,36 +2362,24 @@
         await updateDoc(shopRef, { isOpen: !state.shopState.isOpen });
       }
 
-      // --- Break Time Logic ---
-      if (action === 'start-break') {
-          const html = `
-              <div class="text-right space-y-3 mt-2">
-                 <label class="block text-gray-400 text-xs md:text-sm font-bold">اختر وقت انتهاء فترة الراحة وعودة العمل (مثال: بعد نصف ساعة):</label>
-                 <input type="time" id="input-break-end-time" class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none" required>
-              </div>
-          `;
-          const ok = await showModal({
-              type: 'confirm',
-              title: '☕ بدء فترة راحة للصالون',
-              iconName: 'coffee',
-              iconBgClass: 'bg-orange-500/20 text-orange-500',
-              htmlContent: html,
-              confirmText: 'تفعيل الراحة وإعلام العملاء'
-          });
-
-          if (ok) {
-              const breakTime = document.getElementById('input-break-end-time').value;
-              if (!breakTime) return customAlert('يرجى تحديد وقت انتهاء الراحة أولاً.');
-              await updateDoc(shopRef, { isOnBreak: true, breakEndTime: breakTime });
-              customAlert('تم تفعيل فترة الراحة وإعلام جميع العملاء بنجاح.');
-          }
-      }
-
-      if (action === 'end-break') {
-          const ok = await customConfirm('هل أنت متأكد من إنهاء فترة الراحة والعودة للعمل الآن؟');
-          if (ok) {
-              await updateDoc(shopRef, { isOnBreak: false, breakEndTime: null });
-              customAlert('تم إنهاء فترة الراحة وعودة العمل بنجاح.');
+      // --- Toggle Break Time ---
+      if (action === 'toggle-break') {
+          if (state.shopState.isOnBreak) {
+              const ok = await customConfirm('هل أنت متأكد من إنهاء فترة الراحة واستئناف العمل؟');
+              if (ok) {
+                  await updateDoc(shopRef, { isOnBreak: false, breakEndTime: null });
+                  customAlert("تم إنهاء فترة الراحة، وعاد الصالون للعمل.");
+              }
+          } else {
+              const d = new Date();
+              d.setMinutes(d.getMinutes() + 30);
+              const suggestedTime = d.toTimeString().substring(0, 5); // "HH:MM"
+              
+              const returnTime = await customPrompt("متى ستنتهي فترة الراحة؟ (الوقت الذي سيظهر للعملاء)", suggestedTime, 'time');
+              if (returnTime) {
+                  await updateDoc(shopRef, { isOnBreak: true, breakEndTime: returnTime });
+                  customAlert(`تم تفعيل فترة الراحة حتى الساعة ${returnTime} بنجاح.`);
+              }
           }
       }
 
@@ -2295,8 +2402,13 @@
       if (action === 'save-hours') {
          const st = document.getElementById('shop-start-time').value;
          const en = document.getElementById('shop-end-time').value;
+         const waLink = document.getElementById('shop-wa-link').value.trim();
+         
          if (st && en) {
-            await updateDoc(shopRef, { workingHours: { start: st, end: en } });
+            await updateDoc(shopRef, { 
+               workingHours: { start: st, end: en },
+               whatsappGroupLink: waLink
+            });
             customAlert("تم حفظ الإعدادات بنجاح.");
          }
       }
@@ -3099,6 +3211,11 @@
               if (myPosition === 1 && isToday && !state.wasFirstInLine) {
                   state.wasFirstInLine = true;
                   try { customerAlertSound.play(); } catch(e) {}
+                  
+                  if ("Notification" in window && Notification.permission === "granted") {
+                      new Notification("تنبيه: دورك القادم!", { body: "العميل الذي يسبقك بدأ خدمته للتو! يُرجى الاستعداد والتوجه إلى الصالون.", icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>" });
+                  }
+
                   showModal({
                      type: 'alert',
                      title: '🔥 تنبيه: دورك القادم!',
