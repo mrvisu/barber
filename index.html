@@ -148,6 +148,7 @@
               <button data-action="show-saas-register" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl border border-gray-700 transition text-sm">
                  تسجيل صالون جديد (تجربة مجانية)
               </button>
+              <a href="?platformAdmin=1" class="inline-flex mt-4 text-xs text-gray-500 hover:text-blue-300 underline underline-offset-4">دخول مدير المنصة لإدارة الاشتراكات</a>
            </div>
         </div>
 
@@ -187,6 +188,28 @@
            </div>
         </div>
       </div>
+    </div>
+
+    <!-- VIEW: Platform Subscription Admin -->
+    <div id="view-platform-admin" class="hidden-view min-h-[70vh] w-full">
+      <section id="platform-admin-login" class="max-w-lg mx-auto mt-8 bg-gray-900 border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+        <div class="text-center mb-6"><i data-lucide="shield-check" class="w-12 h-12 text-blue-400 mx-auto mb-3"></i><h1 class="text-2xl font-black text-white">إدارة اشتراكات المنصة</h1><p class="text-gray-400 text-sm mt-2">دخول مخصص لحساب مدير المنصة الموثّق</p></div>
+        <form id="form-platform-admin-login" class="space-y-4">
+          <div><label class="block text-gray-400 text-sm font-bold mb-2" for="platform-admin-email">البريد الإلكتروني الإداري</label><input id="platform-admin-email" type="email" autocomplete="username" required class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white text-left" dir="ltr"></div>
+          <div><label class="block text-gray-400 text-sm font-bold mb-2" for="platform-admin-password">كلمة المرور</label><input id="platform-admin-password" type="password" autocomplete="current-password" required class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-white text-left" dir="ltr"></div>
+          <p id="platform-admin-login-error" class="hidden text-red-400 text-sm" role="alert"></p>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-xl">دخول لوحة الاشتراكات</button>
+        </form>
+        <p class="text-gray-500 text-xs mt-4 text-center">لن تُمنح الصلاحية إلا لحساب Firebase يحمل مطالبة platformAdmin الموثّقة.</p>
+      </section>
+      <section id="platform-admin-dashboard" class="hidden max-w-6xl mx-auto">
+        <div class="flex flex-col sm:flex-row justify-between gap-3 items-start sm:items-center mb-5">
+          <div><h1 class="text-2xl md:text-3xl font-black text-white">إدارة اشتراكات الصالونات</h1><p id="platform-admin-count" class="text-gray-400 text-sm mt-1"></p></div>
+          <div class="flex gap-2"><button data-action="platform-refresh" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold">تحديث</button><button data-action="platform-logout" class="bg-red-500/15 hover:bg-red-500/25 text-red-300 px-4 py-2 rounded-lg font-bold">خروج</button></div>
+        </div>
+        <p id="platform-admin-data-error" class="hidden mb-4 bg-red-500/10 border border-red-500/30 text-red-300 p-3 rounded-xl" role="alert"></p>
+        <div id="platform-admin-shops" class="space-y-3"></div>
+      </section>
     </div>
 
     <!-- VIEW: Subscription Expired -->
@@ -291,7 +314,7 @@
   <!-- Application Logic -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-    import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, addDoc, deleteDoc, serverTimestamp, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
     // --- PWA Install Prompt Logic ---
@@ -542,7 +565,13 @@
       selectedChairId: '',
       queue: [],
       knownTicketIds: new Set(), // For audio notifications
-      customersDB: [], 
+      customersDB: [],
+      dbSearchTerm: '',
+      platformAdminMode: false,
+      isPlatformAdmin: false,
+      platformAdminEmail: '',
+      platformAdminError: '',
+      platformShops: [],
       customerPhone: '',
       customerName: '', 
       customerRecord: null, 
@@ -590,11 +619,9 @@
     const getShopChairs = () => state.shopState.chairs || [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0, isLocked: false }];
     const isChairAvailableFor = (chairId, bookingDate, excludeTicketId = null) => {
       const chair = getShopChairs().find(item => item.id === chairId);
+      // يسمح بالحجز المتعدد على الكرسي المفتوح؛ القفل اليدوي للحلاق هو القيد الوحيد.
       if (!chair || chair.isLocked) return false;
-      return !state.queue.some(ticket => ticket.id !== excludeTicketId &&
-        (ticket.status === 'waiting' || ticket.status === 'active') &&
-        ticket.bookingDate === bookingDate &&
-        (ticket.chairId === chairId || (!ticket.chairId && chairId === 'chair-1')));
+      return true;
     };
     const getCurrentPrayerName = async () => {
       const city = (state.shopState.prayerCity || 'Cairo').trim();
@@ -794,10 +821,67 @@
       }
     };
 
+    const escapeAdminHtml = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+    const renderPlatformAdminView = () => {
+      const login = document.getElementById('platform-admin-login');
+      const dashboard = document.getElementById('platform-admin-dashboard');
+      if (!state.isPlatformAdmin) {
+        login.classList.remove('hidden');
+        dashboard.classList.add('hidden');
+        const error = document.getElementById('platform-admin-login-error');
+        error.textContent = state.platformAdminError || '';
+        error.classList.toggle('hidden', !state.platformAdminError);
+        return;
+      }
+
+      login.classList.add('hidden');
+      dashboard.classList.remove('hidden');
+      document.getElementById('platform-admin-count').textContent = `${state.platformShops.length} صالون — ${escapeAdminHtml(state.platformAdminEmail)}`;
+      const error = document.getElementById('platform-admin-data-error');
+      error.textContent = state.platformAdminError || '';
+      error.classList.toggle('hidden', !state.platformAdminError);
+      const container = document.getElementById('platform-admin-shops');
+      if (!state.platformShops.length) {
+        container.innerHTML = '<div class="text-gray-400 text-center bg-gray-900 border border-gray-800 rounded-2xl p-8">لا توجد صالونات لعرضها.</div>';
+        return;
+      }
+      container.innerHTML = state.platformShops.map(shop => {
+        const endMs = typeof shop.subscriptionEnd === 'number' ? shop.subscriptionEnd : (shop.subscriptionEnd?.toMillis?.() || 0);
+        const active = endMs > Date.now();
+        const expiry = endMs ? new Date(endMs).toLocaleString('ar-EG') : 'غير محدد';
+        const id = escapeAdminHtml(shop.id);
+        const name = escapeAdminHtml(shop.shopName || shop.id);
+        const owner = escapeAdminHtml(shop.ownerId || '—');
+        return `<article class="bg-gray-900 border border-gray-800 rounded-2xl p-4 md:p-5">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="min-w-0"><h2 class="font-black text-white text-lg truncate">${name}</h2><p class="text-gray-400 text-xs mt-1">المعرّف: <bdi>${id}</bdi> · هاتف المالك: <bdi>${owner}</bdi></p><p class="mt-2 text-sm"><span class="${active?'text-green-400':'text-red-400'} font-bold">${active?'نشط':'موقوف / منتهٍ'}</span><span class="text-gray-400"> — الانتهاء: ${escapeAdminHtml(expiry)}</span></p></div>
+            <div class="flex flex-wrap gap-2 shrink-0"><button data-action="platform-stop-subscription" data-id="${id}" class="bg-red-500/15 hover:bg-red-500/25 text-red-300 px-3 py-2 rounded-lg text-xs font-bold">إيقاف</button>${[1,3,6,12].map(months=>`<button data-action="platform-extend-subscription" data-id="${id}" data-months="${months}" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-200 px-3 py-2 rounded-lg text-xs font-bold">+${months} شهر</button>`).join('')}</div>
+          </div>
+        </article>`;
+      }).join('');
+    };
+
+    const loadPlatformAdminShops = async () => {
+      if (!state.isPlatformAdmin || !state.user) return;
+      try {
+        const snapshot = await getDocs(collection(db, ROOT_COLLECTION));
+        state.platformShops = snapshot.docs.map(shopDoc => ({ id: shopDoc.id, ...shopDoc.data() }))
+          .sort((a,b) => String(a.shopName || a.id).localeCompare(String(b.shopName || b.id), 'ar'));
+        state.platformAdminError = '';
+      } catch (error) {
+        console.error('Platform admin list error:', error);
+        state.platformAdminError = 'تعذر تحميل الصالونات. تحقق من مطالبة المدير وقواعد Firestore.';
+      }
+      state.loading = false;
+      updateViewVisibility();
+    };
+
     const updateViewVisibility = () => {
       const views = {
         loading: document.getElementById('view-loading'),
         saasLanding: document.getElementById('view-saas-landing'),
+        platformAdmin: document.getElementById('view-platform-admin'),
         subscriptionExpired: document.getElementById('view-subscription-expired'),
         admin: document.getElementById('view-admin'),
         customerLogin: document.getElementById('view-customer-login'),
@@ -812,6 +896,13 @@
       
       if (state.loading) {
         views.loading.classList.remove('hidden-view');
+        return;
+      }
+
+      if (state.platformAdminMode) {
+        views.platformAdmin.classList.remove('hidden-view');
+        renderPlatformAdminView();
+        lucide.createIcons();
         return;
       }
 
@@ -1132,10 +1223,13 @@
       }
 
       let dbRowsHTML = '';
-      const searchTerm = (document.getElementById('db-search-input')?.value || '').toLowerCase();
-      const filteredDB = state.customersDB.filter(c => 
-         (c.name && c.name.toLowerCase().includes(searchTerm)) || 
-         (c.phone && c.phone.includes(searchTerm))
+      const normalizeSearch = (value) => String(value || '').toLowerCase()
+         .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+         .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+         .replace(/[^\p{L}\p{N}]/gu, '');
+      const searchTerm = normalizeSearch(state.dbSearchTerm || '');
+      const filteredDB = state.customersDB.filter(c =>
+         normalizeSearch(c.name).includes(searchTerm) || normalizeSearch(c.phone).includes(searchTerm)
       );
 
       if (filteredDB.length === 0) {
@@ -2062,6 +2156,47 @@
       const action = target.getAttribute('data-action');
       const shopRef = state.shopId ? doc(db, ROOT_COLLECTION, state.shopId) : null;
 
+      if (action === 'platform-refresh') {
+        if (state.isPlatformAdmin) await loadPlatformAdminShops();
+        return;
+      }
+      if (action === 'platform-logout') {
+        if (state.isPlatformAdmin) {
+          await signOut(auth);
+          window.location.href = window.location.pathname;
+        }
+        return;
+      }
+      if (action === 'platform-stop-subscription' || action === 'platform-extend-subscription') {
+        if (!state.isPlatformAdmin || !state.user) return;
+        const shopId = target.getAttribute('data-id');
+        const shop = state.platformShops.find(item => item.id === shopId);
+        if (!shop) return;
+        const endMs = typeof shop.subscriptionEnd === 'number' ? shop.subscriptionEnd : (shop.subscriptionEnd?.toMillis?.() || 0);
+        let nextEnd;
+        let prompt;
+        if (action === 'platform-stop-subscription') {
+          prompt = `هل تريد إيقاف اشتراك «${shop.shopName || shop.id}» الآن؟`;
+          nextEnd = Date.now() - 1000;
+        } else {
+          const months = Number(target.getAttribute('data-months'));
+          if (![1,3,6,12].includes(months)) return;
+          prompt = `هل تريد تمديد اشتراك «${shop.shopName || shop.id}» لمدة ${months} شهر؟ (الشهر = 30 يوماً)`;
+          nextEnd = Math.max(Date.now(), endMs) + months * 30 * 24 * 60 * 60 * 1000;
+        }
+        if (!(await customConfirm(prompt))) return;
+        try {
+          await updateDoc(doc(db, ROOT_COLLECTION, shopId), { subscriptionEnd: nextEnd });
+          await loadPlatformAdminShops();
+          showToast(action === 'platform-stop-subscription' ? 'تم إيقاف الاشتراك.' : 'تم تمديد الاشتراك.');
+        } catch (error) {
+          console.error('Platform subscription update failed:', error);
+          state.platformAdminError = 'رفضت قواعد Firestore هذا التغيير؛ تأكد من منح حسابك مطالبة platformAdmin.';
+          renderPlatformAdminView();
+        }
+        return;
+      }
+
       // --- Install App (PWA) Action ---
       if (action === 'install-app') {
           if (deferredPrompt) {
@@ -2944,6 +3079,8 @@
             return customAlert(`عفواً، تم رصد حجز مسبق من قبلك (رقم الدور: ${existingBooking.ticketNumber} ليوم ${existingBooking.bookingDate}).\n\nيرجى الانتهاء من دورك الحالي أولاً. وإذا كنت قد أخطأت في موعدك، يمكنك استخدام زر "تعديل اليوم" من شاشة متابعة دورك بدلاً من حجز موعد جديد.`);
         }
 
+        // صفحة واتساب تُجهز بعد إتمام الحجز؛ الإرسال النهائي يتطلب تأكيد المستخدم في واتساب.
+        const salonWhatsAppWindow = window.open('about:blank', '_blank');
         // إظهار مؤشر التحميل على الزر وإيقافه مؤقتاً
         const originalText = target.innerHTML;
         target.innerHTML = `<i data-lucide="loader" class="w-5 h-5 md:w-6 md:h-6 shrink-0 animate-spin"></i> جاري تأكيد الحجز...`;
@@ -2961,6 +3098,18 @@
               styleImageUrl: state.selectedStyleImage || null, chairId: selectedChair, timestamp: serverTimestamp(),
               deviceId: localDeviceId // Save Device ID for ban system
             });
+            const salonPhone = String(state.shopState.ownerId || '').replace(/\D/g, '');
+            const salonInternationalPhone = salonPhone.startsWith('0') ? `20${salonPhone.slice(1)}` : salonPhone;
+            if (salonWhatsAppWindow && salonInternationalPhone) {
+              const lastVisitValue = state.customerRecord?.lastVisitDate || state.customersDB.find(c => c.phone === state.customerPhone)?.lastVisitDate;
+              const lastVisitDate = lastVisitValue ? new Date(lastVisitValue).toLocaleDateString('ar-EG') : 'غير مسجلة';
+              const bookingDateText = new Date(`${bDate}T00:00:00`).toLocaleDateString('ar-EG');
+              const message = `تأكيد حجز جديد\nاسم العميل: ${state.customerName}\nرقم الدور: ${ticketNum}\nتاريخ الحجز: ${bookingDateText}\nآخر زيارة: ${lastVisitDate}`;
+              salonWhatsAppWindow.location.href = `https://wa.me/${salonInternationalPhone}?text=${encodeURIComponent(message)}`;
+            } else if (salonWhatsAppWindow) {
+              salonWhatsAppWindow.close();
+              customAlert('تم الحجز، لكن لم يُسجل رقم هاتف المالك لاستقبال رسالة واتساب.');
+            }
 
             const custRef = doc(db, ROOT_COLLECTION, state.shopId, 'customers', state.customerPhone);
             const custSnap = await getDoc(custRef);
@@ -2975,6 +3124,7 @@
             state.showNewBookingForm = false; 
             updateViewVisibility(); // إجبار التبديل إلى لوحة الدور فوراً بعد الحجز
         } catch (err) {
+            if (salonWhatsAppWindow && !salonWhatsAppWindow.closed) salonWhatsAppWindow.close();
             target.innerHTML = originalText;
             target.disabled = false;
             lucide.createIcons();
@@ -3143,6 +3293,25 @@
       }
     });
 
+    document.getElementById('form-platform-admin-login')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('platform-admin-email').value.trim();
+      const passwordInput = document.getElementById('platform-admin-password');
+      state.platformAdminError = '';
+      state.loading = true;
+      updateViewVisibility();
+      try {
+        await signInWithEmailAndPassword(auth, email, passwordInput.value);
+        state.platformAdminEmail = email;
+        passwordInput.value = '';
+      } catch (error) {
+        console.error('Platform admin sign-in failed:', error);
+        state.platformAdminError = 'تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور وحالة حساب Firebase.';
+        state.loading = false;
+        updateViewVisibility();
+      }
+    });
+
     document.getElementById('form-saas-login')?.addEventListener('submit', async (e) => {
        e.preventDefault();
        const ownerId = document.getElementById('login-owner-id').value.trim();
@@ -3194,7 +3363,19 @@
     });
 
     document.addEventListener('input', (e) => {
-       if(e.target.id === 'db-search-input') renderAdminPanel();
+       if(e.target.id === 'db-search-input') {
+          const value = e.target.value;
+          state.dbSearchTerm = value;
+          const start = e.target.selectionStart;
+          const end = e.target.selectionEnd;
+          renderAdminPanel();
+          const refreshedInput = document.getElementById('db-search-input');
+          if (refreshedInput) {
+             refreshedInput.value = value;
+             refreshedInput.focus({ preventScroll: true });
+             if (start !== null && end !== null) refreshedInput.setSelectionRange(start, end);
+          }
+       }
        if (e.target.id === 'admin-month-filter') { state.adminSelectedMonth = e.target.value; renderAdminPanel(); }
     });
 
@@ -3209,7 +3390,8 @@
       }, 15000);
       lucide.createIcons();
       const urlParams = new URLSearchParams(window.location.search);
-      state.shopId = urlParams.get('shop');
+      state.platformAdminMode = urlParams.get('platformAdmin') === '1';
+      state.shopId = state.platformAdminMode ? null : urlParams.get('shop');
       
       // Determine Role based on Session and URL
       const adminSession = sessionStorage.getItem('saasAdminShop');
@@ -3223,12 +3405,12 @@
       let phoneParam = urlParams.get('phone');
       let localPhone = localStorage.getItem('barber_cust_phone');
       
-      if(phoneParam) {
+      if(phoneParam && !state.platformAdminMode) {
         state.customerPhone = phoneParam;
         if(urlParams.get('name')) state.customerName = urlParams.get('name');
         state.role = 'customer'; 
         await fetchCustomerRecord(state.customerPhone);
-      } else if (localPhone && state.role === 'customer') {
+      } else if (!state.platformAdminMode && localPhone && state.role === 'customer') {
         state.customerPhone = localPhone;
         state.customerName = localStorage.getItem('barber_cust_name') || 'عميلنا المميز';
         state.role = 'customer';
@@ -3236,10 +3418,40 @@
       }
 
       if (!auth) return;
-      try { await signInAnonymously(auth); } catch (error) { console.error("Auth error:", error); }
+      if (!state.platformAdminMode) {
+        try { await signInAnonymously(auth); } catch (error) { console.error("Auth error:", error); }
+      }
 
       onAuthStateChanged(auth, async (u) => {
         state.user = u;
+        if (state.platformAdminMode) {
+          state.isPlatformAdmin = false;
+          if (!u) {
+            state.loading = false;
+            updateViewVisibility();
+            return;
+          }
+          state.loading = true;
+          try {
+            const tokenResult = await u.getIdTokenResult(true);
+            if (tokenResult.claims.platformAdmin === true) {
+              state.isPlatformAdmin = true;
+              state.platformAdminEmail = u.email || '';
+              state.platformAdminError = '';
+              await loadPlatformAdminShops();
+            } else {
+              state.platformAdminError = 'هذا الحساب لا يحمل صلاحية مدير المنصة. اطلب تعيين platformAdmin من مسؤول Firebase.';
+              state.loading = false;
+              updateViewVisibility();
+            }
+          } catch (error) {
+            console.error('Platform admin claim verification failed:', error);
+            state.platformAdminError = 'تعذر التحقق من صلاحية حساب مدير المنصة.';
+            state.loading = false;
+            updateViewVisibility();
+          }
+          return;
+        }
         if (u && state.shopId) {
            // Resolve an existing reservation before the shop listener renders the customer view.
            if (state.role === 'customer' && state.customerPhone) {
