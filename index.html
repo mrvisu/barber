@@ -3091,6 +3091,9 @@
             const queueForDate = state.queue.filter(q => q.bookingDate === bDate);
             const maxTicket = queueForDate.length > 0 ? Math.max(...queueForDate.map(q => q.ticketNumber || 0)) : 0;
             const ticketNum = maxTicket + 1;
+            const turnsAhead = queueForDate.filter(q =>
+              (q.status === 'waiting' || q.status === 'active') && (q.ticketNumber || 0) < ticketNum
+            ).length;
 
             await addDoc(collection(db, ROOT_COLLECTION, state.shopId, 'queue'), {
               phone: state.customerPhone, name: state.customerName, ticketNumber: ticketNum, bookingDate: bDate,
@@ -3104,7 +3107,7 @@
               const lastVisitValue = state.customerRecord?.lastVisitDate || state.customersDB.find(c => c.phone === state.customerPhone)?.lastVisitDate;
               const lastVisitDate = lastVisitValue ? new Date(lastVisitValue).toLocaleDateString('ar-EG') : 'غير مسجلة';
               const bookingDateText = new Date(`${bDate}T00:00:00`).toLocaleDateString('ar-EG');
-              const message = `تأكيد حجز جديد\nاسم العميل: ${state.customerName}\nرقم الدور: ${ticketNum}\nتاريخ الحجز: ${bookingDateText}\nآخر زيارة: ${lastVisitDate}`;
+              const message = `✅ *تأكيد حجز جديد*\n👤 العميل: ${state.customerName}\n🎟️ رقم الدور: ${ticketNum}\n⏳ الأدوار أمام العميل: ${turnsAhead}\n📅 تاريخ الحجز: ${bookingDateText}\n🕘 آخر زيارة: ${lastVisitDate}`;
               salonWhatsAppWindow.location.href = `https://wa.me/${salonInternationalPhone}?text=${encodeURIComponent(message)}`;
             } else if (salonWhatsAppWindow) {
               salonWhatsAppWindow.close();
