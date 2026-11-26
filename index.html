@@ -558,6 +558,7 @@
         bannedPhones: [],
         bannedDevices: [],
         lockedDates: [], // Array of 'YYYY-MM-DD' representing locked/fully booked days
+        chairLocks: [], // Array of { chairId, date } representing chair locks for one date only
         holidays: [], // Array of 'YYYY-MM-DD' representing holidays
         whatsappGroupLink: '', // رابط جروب الواتساب
         prayerCity: 'Cairo', prayerCountry: 'Egypt', isPrayerBreak: false, prayerBreakName: ''
@@ -616,11 +617,18 @@
       return true; 
     };
 
-    const getShopChairs = () => state.shopState.chairs || [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0, isLocked: false }];
+    const getShopChairs = () => state.shopState.chairs || [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0 }];
+    const getTodayDate = () => new Date().toISOString().split('T')[0];
+    const isChairLockedFor = (chairId, bookingDate) => {
+      if (!chairId || !bookingDate) return false;
+      return (state.shopState.chairLocks || []).some(lock =>
+        lock && lock.chairId === chairId && lock.date === bookingDate
+      );
+    };
     const isChairAvailableFor = (chairId, bookingDate, excludeTicketId = null) => {
       const chair = getShopChairs().find(item => item.id === chairId);
-      // يسمح بالحجز المتعدد على الكرسي المفتوح؛ القفل اليدوي للحلاق هو القيد الوحيد.
-      if (!chair || chair.isLocked) return false;
+      // الحجز والقفل مرتبطان بالتاريخ؛ لا يؤثران على الأيام الأخرى.
+      if (!chair || isChairLockedFor(chairId, bookingDate)) return false;
       return true;
     };
     const getCurrentPrayerName = async () => {
@@ -960,7 +968,7 @@
       if(!state.adminSelectedDate) state.adminSelectedDate = today;
 
       const isOpen = state.shopState.isOpen;
-      const chairs = state.shopState.chairs || [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0, isLocked: false }];
+      const chairs = state.shopState.chairs || [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0 }];
       
       const allWaiting = state.queue.filter(q => q.status === 'waiting');
       const allCompleted = state.queue.filter(q => q.status === 'completed');
@@ -1010,7 +1018,7 @@
                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-amber-700"></div>
                <h3 class="text-lg md:text-xl font-bold text-amber-500 mb-4 flex items-center justify-between gap-2 shrink-0">
                   <span class="flex items-center gap-2 truncate"><i data-lucide="scissors" class="w-5 h-5 shrink-0"></i> ${chair.name}</span>
-                  <button data-action="admin-toggle-chair-lock" data-id="${chair.id}" class="text-xs px-2 py-1 rounded-lg border ${chair.isLocked?'bg-red-500/20 text-red-300 border-red-500/40':'bg-green-500/20 text-green-300 border-green-500/40'}">${chair.isLocked?'فتح الكرسي':'قفل الكرسي'}</button>
+                  <button data-action="admin-toggle-chair-lock" data-id="${chair.id}" data-date="${state.adminSelectedDate}" class="text-xs px-2 py-1 rounded-lg border ${isChairLockedFor(chair.id, state.adminSelectedDate)?'bg-red-500/20 text-red-300 border-red-500/40':'bg-green-500/20 text-green-300 border-green-500/40'}">${isChairLockedFor(chair.id, state.adminSelectedDate)?'فتح الكرسي لهذا اليوم':'قفل الكرسي لهذا اليوم'}</button>
                </h3>
                
                <div class="text-center bg-gray-950 p-4 md:p-6 rounded-2xl border border-gray-800 shadow-inner flex-1 flex flex-col justify-center relative z-10">
@@ -1035,7 +1043,7 @@
                         <p class="text-xs text-gray-400 mt-2">سيظهر اسم العميل عند بدء الحلاق للخدمة.</p>
                      </div>
                      <div class="mt-auto w-full pt-4 shrink-0">
-                        <button data-action="end-and-next" data-chair-id="${chair.id}" ${chair.isLocked ? 'disabled title="الكرسي مقفل"' : ''} class="text-xs md:text-sm bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500 hover:text-gray-900 py-3 rounded-xl border border-emerald-500/30 transition font-bold flex items-center justify-center gap-2 w-full"><i data-lucide="play" class="w-4 h-4"></i> بدء الحجز على الكرسي</button>
+                        <button data-action="end-and-next" data-chair-id="${chair.id}" ${isChairLockedFor(chair.id, state.adminSelectedDate) ? 'disabled title="الكرسي مقفل لهذا اليوم"' : ''} class="text-xs md:text-sm bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500 hover:text-gray-900 py-3 rounded-xl border border-emerald-500/30 transition font-bold flex items-center justify-center gap-2 w-full"><i data-lucide="play" class="w-4 h-4"></i> بدء الحجز على الكرسي</button>
                      </div>
                   ` : `
                      <div class="flex flex-col items-center justify-center text-gray-600 py-6 md:py-8 flex-1">
@@ -1043,7 +1051,7 @@
                         <p class="font-bold text-sm md:text-base">الكرسي فارغ حالياً</p>
                      </div>
                      <div class="mt-auto w-full pt-4 shrink-0">
-                        <button data-action="end-and-next" data-chair-id="${chair.id}" ${chair.isLocked ? 'disabled title="الكرسي مقفل"' : ''} class="text-xs md:text-sm bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 py-3 rounded-xl border border-amber-500/30 transition font-bold flex items-center justify-center gap-2 w-full"><i data-lucide="play" class="w-4 h-4"></i> استدعاء العميل التالي</button>
+                        <button data-action="end-and-next" data-chair-id="${chair.id}" ${isChairLockedFor(chair.id, state.adminSelectedDate) ? 'disabled title="الكرسي مقفل لهذا اليوم"' : ''} class="text-xs md:text-sm bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 py-3 rounded-xl border border-amber-500/30 transition font-bold flex items-center justify-center gap-2 w-full"><i data-lucide="play" class="w-4 h-4"></i> استدعاء العميل التالي</button>
                      </div>
                   `}
                   
@@ -1263,6 +1271,7 @@
 
       const isSelectedDateLocked = (state.shopState.lockedDates || []).includes(state.adminSelectedDate);
       const isSelectedDateHoliday = (state.shopState.holidays || []).includes(state.adminSelectedDate);
+      const lockedChairCount = chairs.filter(chair => isChairLockedFor(chair.id, state.adminSelectedDate)).length;
 
       container.innerHTML = `
         <div class="bg-indigo-500/10 border border-indigo-500/30 p-4 md:p-5 rounded-2xl md:rounded-3xl mb-4 md:mb-6 flex flex-col lg:flex-row justify-between items-center gap-4 shadow-lg relative overflow-hidden animate-fade-in-down w-full">
@@ -1416,12 +1425,12 @@
                      <span class="flex items-center gap-2"><i data-lucide="armchair" class="w-4 h-4"></i> إدارة كراسي الصالون (الحلاقين)</span>
                      <button data-action="admin-add-chair" class="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> إضافة كرسي</button>
                   </h4>
-                  <p class="text-[10px] md:text-xs text-gray-400 mb-3">يمكنك إضافة كراسي بأسماء الحلاقين ليعمل كل كرسي بشكل مستقل في الصالون.</p>
+                  <p class="text-[10px] md:text-xs text-gray-400 mb-3">القفل الحالي خاص بتاريخ لوحة الإدارة فقط (${state.adminSelectedDate}) ولا يؤثر على الأيام القادمة.</p>
                   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-48 overflow-y-auto custom-scrollbar p-1">
                      ${chairs.map(chair => `
                         <div class="bg-gray-900 border border-gray-700 rounded-xl p-3 flex items-center justify-between group">
                            <span class="text-white text-sm font-bold truncate pr-2"><i data-lucide="scissors" class="w-3 h-3 inline text-gray-500 ml-1"></i> ${chair.name}</span>
-                           <button data-action="admin-toggle-chair-lock" data-id="${chair.id}" class="text-[10px] px-2 py-1 rounded ${chair.isLocked?'bg-red-500/20 text-red-300':'bg-green-500/20 text-green-300'}">${chair.isLocked?'مقفل':'مفتوح'}</button>
+                           <button data-action="admin-toggle-chair-lock" data-id="${chair.id}" data-date="${state.adminSelectedDate}" class="text-[10px] px-2 py-1 rounded ${isChairLockedFor(chair.id, state.adminSelectedDate)?'bg-red-500/20 text-red-300':'bg-green-500/20 text-green-300'}">${isChairLockedFor(chair.id, state.adminSelectedDate)?'مقفل لهذا اليوم':'مفتوح لهذا اليوم'}</button>
                            <button data-action="admin-remove-chair" data-id="${chair.id}" class="text-red-500/50 hover:text-red-500 p-1.5 rounded transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
                      `).join('')}
@@ -2104,7 +2113,7 @@
              adminPin: sPin,
              subscriptionEnd: subscriptionEnd,
              isOpen: false,
-             chairs: [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0, isLocked: false }],
+             chairs: [{ id: 'chair-1', name: 'الكرسي الرئيسي', timerEndTime: 0 }],
              totalRatings: 0,
              ratingSum: 0,
              workingHours: { start: "10:00", end: "23:00" },
@@ -2114,6 +2123,7 @@
              bannedPhones: [],
              bannedDevices: [],
              lockedDates: [],
+             chairLocks: [],
              holidays: [],
              whatsappGroupLink: '',
              prayerCity: 'Cairo', prayerCountry: 'Egypt', isPrayerBreak: false, prayerBreakName: ''
@@ -2545,10 +2555,19 @@
 
       if (action === 'admin-toggle-chair-lock') {
         const chairId = target.getAttribute('data-id');
-        const chairsNow = getShopChairs();
-        const changed = chairsNow.map(chair => chair.id === chairId ? { ...chair, isLocked: !chair.isLocked } : chair);
-        const changedChair = changed.find(chair => chair.id === chairId);
-        if (changedChair) await updateDoc(shopRef, { chairs: changed });
+        const dateToToggle = target.getAttribute('data-date') || state.adminSelectedDate || getTodayDate();
+        if (!chairId || !dateToToggle) return;
+
+        let chairLocks = [...(state.shopState.chairLocks || [])].filter(lock => lock && lock.chairId && lock.date);
+        const existingIndex = chairLocks.findIndex(lock => lock.chairId === chairId && lock.date === dateToToggle);
+        if (existingIndex >= 0) {
+          chairLocks.splice(existingIndex, 1);
+          customAlert(`تم فتح الكرسي لهذا اليوم فقط: ${dateToToggle}`);
+        } else {
+          chairLocks.push({ chairId, date: dateToToggle });
+          customAlert(`تم قفل الكرسي لهذا اليوم فقط: ${dateToToggle}\nوسيظل متاحاً في الأيام الأخرى.`);
+        }
+        await updateDoc(shopRef, { chairLocks });
       }
       if (action === 'customer-change-chair') {
         const ticket = state.myTicket;
@@ -2698,10 +2717,10 @@
            newChairs[cIdx].timerEndTime = 0;
            await updateDoc(shopRef, { chairs: newChairs });
         } else if (action === 'end-and-next') {
-           if (chair.isLocked) {
+           if (isChairLockedFor(chair.id, state.adminSelectedDate)) {
               newChairs[cIdx].timerEndTime = 0;
               await updateDoc(shopRef, { chairs: newChairs });
-              customAlert('تم إنهاء الدور، والكرسي مقفل حالياً لذلك لم يتم استدعاء عميل جديد.');
+              customAlert('تم إنهاء الدور، والكرسي مقفل لهذا اليوم لذلك لم يتم استدعاء عميل جديد.');
               return;
            }
            const waitingQueue = state.queue.filter(q => q.status === 'waiting' && q.bookingDate === state.adminSelectedDate);
@@ -3507,6 +3526,7 @@
           if(!state.shopState.services) state.shopState.services = [];
           if(!state.shopState.products) state.shopState.products = [];
           if(!state.shopState.lockedDates) state.shopState.lockedDates = []; 
+          if(!state.shopState.chairLocks) state.shopState.chairLocks = [];
           if(!state.shopState.holidays) state.shopState.holidays = []; 
           
           // Backward compatibility for chairs
